@@ -1,0 +1,412 @@
+/* ============================================================
+   ข้อมูลเซิร์ฟเวอร์ + ปลั๊กอิน (ภาษาไทย)
+   แก้ที่ไฟล์นี้ไฟล์เดียว — หน้าเว็บดึงไปแสดงอัตโนมัติ
+   ตรวจจากเซิฟจริง: 2026-06-14 (Paper 1.21.11 build 130)
+
+   commands: [{ cmd, desc, must:true=คำสั่งที่ต้องรู้ }]
+   integrations: [{ with, text }]
+   ============================================================ */
+
+window.MC = {
+
+  /* ---------- รายละเอียดเซิร์ฟเวอร์ ---------- */
+  server: {
+    name: "เซิร์ฟเวอร์ OneBlock RPG",
+    tagline: "OneBlock Skyblock + ไอเทม RPG โมเดล 3D",
+    core: "Paper 1.21.11 (build 130)",
+    mc: "Minecraft 1.21.11",
+    java: "Java 24 (JDK 24 — Paper ต้องการ 21+)",
+    ram: "4 GB (Xmx/Xms 4G)",
+    address: "localhost:25565",
+    op: "Oxygenlave",
+    github: "https://github.com/TARO2365/minecraft-server",
+    bootTime: "~27–30 วินาที",
+    note: "ดูแล/แก้ไขผ่าน Claude Code (หัวหน้างาน + subagent: researcher / docs-thai / installer / verifier)"
+  },
+
+  /* ---------- หมวดหมู่ (สีการ์ด) ---------- */
+  categories: {
+    island:  { label: "ระบบเกาะ / OneBlock", color: "#2f80ed" },
+    rpg:     { label: "RPG / สกิล / มอนสเตอร์", color: "#f2994a" },
+    economy: { label: "เมนู / ร้านค้า / เศรษฐกิจ", color: "#27ae60" },
+    display: { label: "แสดงผล / ตกแต่ง", color: "#9b51e0" },
+    admin:   { label: "สิทธิ์ / จัดการผู้เล่น", color: "#eb5757" },
+    world:   { label: "โลก / แก้ไข / ป้องกัน", color: "#2d4059" },
+    util:    { label: "เสริม / หลังบ้าน", color: "#f2c94c" }
+  },
+
+  /* ---------- ปลั๊กอิน ---------- */
+  plugins: [
+    {
+      id: "bentobox",
+      name: "BentoBox + AOneBlock",
+      version: "3.14.2 / AOneBlock 1.23.0",
+      cat: "island",
+      icon: "🧱",
+      tagline: "หัวใจของเซิฟ — ระบบเกาะ OneBlock ทั้งหมด",
+      what: "BentoBox คือเอนจินจัดการเกาะ (Skyblock framework) ส่วน AOneBlock ทำโหมด OneBlock — เริ่มจากบล็อกเดียว ทุบแล้วเกิดบล็อกใหม่ไล่เฟสไปเรื่อยๆ จนได้ของหายาก เซิฟนี้ลง addon เสริม 16 ตัว (Level, Challenges, Warps, Limits, Bank, Biomes, Border, Greenhouses, MagicCobblestoneGenerator, ControlPanel, Likes, IslandFly, CheckMeOut, FarmersDance, Chat)",
+      features: [
+        "สร้าง/รีเซ็ตเกาะส่วนตัว + ชวนเพื่อนร่วมเกาะ (team)",
+        "ระบบเฟส OneBlock — บล็อกเปลี่ยนตามความคืบหน้า",
+        "Level = คิดเลเวลเกาะ, Challenges = เควสต์, Limits = จำกัดบล็อก/มอบกันแลค",
+        "Bank = ธนาคารเกาะ, Biomes = ซื้อไบโอม, Warps = วาร์ปหาเกาะคนอื่น"
+      ],
+      commands: [
+        { cmd: "/island", desc: "เปิดเมนูเกาะหลัก (ย่อ /is)", must: true },
+        { cmd: "/is create", desc: "สร้างเกาะใหม่ของตัวเอง", must: true },
+        { cmd: "/is go", desc: "วาร์ปกลับเกาะตัวเอง", must: true },
+        { cmd: "/is level", desc: "เช็กเลเวลเกาะ", must: true },
+        { cmd: "/is challenges", desc: "เปิดเมนูเควสต์/ภารกิจ", must: true },
+        { cmd: "/is invite <ชื่อ>", desc: "ชวนเพื่อนมาร่วมเกาะ", must: false },
+        { cmd: "/is sethome", desc: "ตั้งจุดเกิดบนเกาะ", must: false },
+        { cmd: "/is warps", desc: "ดูรายการวาร์ปเกาะคนอื่น", must: false },
+        { cmd: "/is biomes", desc: "ซื้อ/เปลี่ยนไบโอมบนเกาะ", must: false },
+        { cmd: "/is settings", desc: "ตั้งค่าสิทธิ์/กฎบนเกาะ", must: false },
+        { cmd: "/bbox reload", desc: "[แอดมิน] รีโหลด config BentoBox", must: false }
+      ],
+      integrations: [
+        { with: "Level + DecentHolograms + PlaceholderAPI", text: "ทำป้ายโฮโลแกรมโชว์อันดับเลเวลเกาะ Top 10 ที่สปอว์น อัปเดตเอง" },
+        { with: "Bank + Vault", text: "ธนาคารเกาะใช้เงินก้อนเดียวกับร้านค้าผ่าน Vault" },
+        { with: "Challenges + EconomyShopGUI", text: "ทำเควสต์ให้รางวัลเป็นเงิน/ไอเทมที่ขายต่อในร้านได้" }
+      ]
+    },
+    {
+      id: "mythicmobs",
+      name: "MythicMobs",
+      version: "5.11.2",
+      cat: "rpg",
+      icon: "🐉",
+      tagline: "สร้างมอนสเตอร์/บอสคัสตอม + สกิลพิเศษ",
+      what: "ปลั๊กอินทำมอนสเตอร์เอง — กำหนด HP, สกิล, AI, ดรอป, อุปกรณ์ ได้ละเอียด เป็นฐานสำหรับบอสประจำเฟส OneBlock และต่อยอดเป็นมอนสเตอร์โมเดล 3D ได้ (เชื่อม ModelEngine). คำสั่งส่วนใหญ่เป็นฝั่งแอดมิน",
+      features: [
+        "ออกแบบมอนสเตอร์/บอสเองทุกค่า (HP, ดาเมจ, สกิล, AI)",
+        "ระบบสกิล/เมคานิกซับซ้อน (ยิงกระสุน, AOE, เรียกลูกสมุน)",
+        "ตั้ง drop table + spawner เองได้",
+        "เชื่อมไอเทม 3D ของ Nexo และโมเดลของ ModelEngine ได้"
+      ],
+      commands: [
+        { cmd: "/mm", desc: "เมนูหลัก MythicMobs", must: true },
+        { cmd: "/mm mobs spawn <ชื่อ> [จำนวน]", desc: "เสกมอนสเตอร์คัสตอมออกมา", must: true },
+        { cmd: "/mm items get <ชื่อ>", desc: "รับไอเทมคัสตอมเข้ากระเป๋า", must: true },
+        { cmd: "/mm reload", desc: "รีโหลด config ทั้งหมด", must: true },
+        { cmd: "/mm mobs list", desc: "ดูรายชื่อมอนสเตอร์ทั้งหมด", must: false },
+        { cmd: "/mm items list", desc: "ดูรายชื่อไอเทมทั้งหมด", must: false },
+        { cmd: "/mm mobs kill <ชื่อ>", desc: "ฆ่ามอนสเตอร์ชนิดนั้นทั้งแมพ", must: false }
+      ],
+      integrations: [
+        { with: "Vault", text: "ตั้งให้บอส/มอนสเตอร์ดรอปเงินเข้าระบบเศรษฐกิจตรงๆ" },
+        { with: "Nexo (ที่จะซื้อ)", text: "ให้มอนสเตอร์สวมใส่/ดรอปไอเทม 3D ของ Nexo เช่น nexo:forest_sword" },
+        { with: "AOneBlock", text: "วางบอสประจำเฟส OneBlock ให้ผ่านก่อนไปเฟสถัดไป" }
+      ]
+    },
+    {
+      id: "auraskills",
+      name: "AuraSkills",
+      version: "2.3.12",
+      cat: "rpg",
+      icon: "⚔️",
+      tagline: "ระบบสกิล/เลเวลผู้เล่น (ขุด/สู้/ตกปลา ฯลฯ)",
+      what: "ระบบ RPG skill — ผู้เล่นได้ XP จากกิจกรรม (ขุด, สู้, ฟาร์ม, ตกปลา) เลเวลขึ้นแล้วปลดล็อกความสามารถ/สเตตัส เหมาะกับสกายบล็อกที่เน้นขุด-เก็บ-โต",
+      features: [
+        "หลายสกิล: Mining, Farming, Foraging, Fighting, Fishing ฯลฯ",
+        "ปลดล็อก ability/บัฟตามเลเวล (ดับเบิลดรอป, เพิ่มดาเมจ)",
+        "มี stat (HP, ดาเมจ, ความเร็ว) ที่โตตามสกิล",
+        "บล็อกคัสตอมของ Nexo/Oraxen ขุดแล้วได้ XP (ItemsAdder ไม่ได้)"
+      ],
+      commands: [
+        { cmd: "/skills", desc: "เปิดเมนูสกิลทั้งหมด (ย่อ /sk)", must: true },
+        { cmd: "/stats", desc: "ดูสเตตัสตัวเอง (HP/ดาเมจ ฯลฯ)", must: true },
+        { cmd: "/skills top <สกิล>", desc: "ดูอันดับผู้เล่นในสกิลนั้น", must: false },
+        { cmd: "/mana", desc: "เช็กมานาปัจจุบัน", must: false },
+        { cmd: "/skills toggle <สกิล>", desc: "เปิด/ปิดการรับ XP สกิลนั้น", must: false },
+        { cmd: "/auraskills xp add <ผู้เล่น> <สกิล> <จำนวน>", desc: "[แอดมิน] เพิ่ม XP ให้ผู้เล่น", must: false },
+        { cmd: "/auraskills reload", desc: "[แอดมิน] รีโหลด config", must: false }
+      ],
+      integrations: [
+        { with: "Nexo / Oraxen", text: "บล็อกคัสตอมขุดแล้วได้ XP สกิล (จุดที่ ItemsAdder ทำไม่ได้)" },
+        { with: "Vault + EconomyShopGUI", text: "สกิลฟาร์มเพิ่มผลผลิต → ขายในร้านได้เงินมากขึ้น" },
+        { with: "PlaceholderAPI", text: "ดึงเลเวลสกิลไปโชว์ในเมนู DeluxeMenus/โฮโลแกรม" }
+      ]
+    },
+    {
+      id: "deluxemenus",
+      name: "DeluxeMenus",
+      version: "1.14.1",
+      cat: "economy",
+      icon: "📋",
+      tagline: "สร้างเมนู GUI คัสตอม (กดปุ่มสั่งงาน)",
+      what: "ทำเมนูหน้าต่าง GUI เองได้อิสระ — แต่ละช่องสั่งคำสั่ง/เปิดเมนูอื่น/โชว์ข้อมูลผู้เล่น เหมาะทำเมนูหลัก, ร้านค้า, เมนูวาร์ป, โปรไฟล์",
+      features: [
+        "ออกแบบเมนู GUI เองทุกช่อง (ไอคอน/ชื่อ/lore)",
+        "ปุ่มสั่ง command / เปิดเมนูซ้อน / ใส่เงื่อนไข (requirement)",
+        "รองรับ PlaceholderAPI โชว์ค่าผู้เล่นสด",
+        "ตั้ง alias เปิดเมนูเองได้ เช่น /menu"
+      ],
+      commands: [
+        { cmd: "/dm open <ชื่อเมนู>", desc: "เปิดเมนูที่สร้างไว้", must: true },
+        { cmd: "/dm list", desc: "ดูเมนูทั้งหมดที่มี", must: true },
+        { cmd: "/dm reload", desc: "รีโหลดเมนูหลังแก้ไฟล์", must: true }
+      ],
+      integrations: [
+        { with: "PlaceholderAPI + Vault", text: "เมนูโปรไฟล์โชว์เงิน/ยศ/เลเวลสกิลแบบเรียลไทม์" },
+        { with: "AuraSkills + BentoBox", text: "เมนูหลักรวมปุ่ม: /skills, /is, ร้านค้า ไว้ที่เดียว" },
+        { with: "EconomyShopGUI", text: "ปุ่ม 'ร้านค้า' ในเมนูเปิดร้าน EconomyShopGUI ต่อ" }
+      ]
+    },
+    {
+      id: "economyshopgui",
+      name: "EconomyShopGUI",
+      version: "7.0.3",
+      cat: "economy",
+      icon: "🛒",
+      tagline: "ร้านค้ากลางแบบ GUI ซื้อ-ขายไอเทม",
+      what: "ร้านค้าหน้าต่าง GUI พร้อมใช้ — ตั้งราคาซื้อ/ขายไอเทม มีหมวดหมู่ ผู้เล่นขายของที่ฟาร์ม/ขุดได้เลย เป็นแกนเศรษฐกิจของเซิฟ",
+      features: [
+        "ร้านค้า GUI แบ่งหมวด (พร้อมราคาตั้งต้น)",
+        "ตั้งราคาซื้อ/ขายต่อไอเทมได้",
+        "รองรับราคาผันผวนตามดีมานด์ (dynamic pricing)",
+        "ขายทั้งสแต็ก/ทั้งกระเป๋าได้"
+      ],
+      commands: [
+        { cmd: "/shop", desc: "เปิดร้านค้าหลัก", must: true },
+        { cmd: "/sellall", desc: "ขายของขายได้ในกระเป๋าทั้งหมด", must: true },
+        { cmd: "/sellgui", desc: "เปิดเมนูขายแบบลากของมาวาง", must: false },
+        { cmd: "/esg reload", desc: "[แอดมิน] รีโหลดร้าน", must: false },
+        { cmd: "/esg setprice", desc: "[แอดมิน] ตั้งราคาในเกม", must: false }
+      ],
+      integrations: [
+        { with: "Vault", text: "ใช้เงินกลางผ่าน Vault ร่วมกับธนาคารเกาะ/EssentialsX" },
+        { with: "AuraSkills", text: "ของจากสกิลฟาร์ม/ขุด เอามาขายที่นี่ = วงจรหาเงิน" }
+      ]
+    },
+    {
+      id: "vault",
+      name: "Vault",
+      version: "1.7.3-b131",
+      cat: "economy",
+      icon: "🏦",
+      tagline: "ตัวกลางระบบเงิน + สิทธิ์ (เบื้องหลัง)",
+      what: "ปลั๊กอินสะพานเชื่อม — ทำให้ปลั๊กเรื่องเงิน/สิทธิ์/แชต คุยกันเป็นระบบเดียว ไม่มีหน้าตาและไม่มีคำสั่งผู้เล่น แต่ปลั๊กเศรษฐกิจแทบทุกตัวต้องมี",
+      features: [
+        "เป็น API กลางสำหรับ 'เงิน' ให้ปลั๊กอื่นใช้ร่วมกัน",
+        "เชื่อมระบบสิทธิ์เข้ากับ LuckPerms",
+        "ทำงานเบื้องหลัง — ไม่มีคำสั่งสำหรับผู้เล่น"
+      ],
+      commands: [],
+      integrations: [
+        { with: "EconomyShopGUI + EssentialsX + BentoBox Bank", text: "ทุกตัวใช้ยอดเงินก้อนเดียวผ่าน Vault = เศรษฐกิจไม่แตกหลายระบบ" },
+        { with: "LuckPerms", text: "Vault ดึงยศ/สิทธิ์จาก LuckPerms ให้ปลั๊กอื่นเช็กได้" }
+      ]
+    },
+    {
+      id: "decentholograms",
+      name: "DecentHolograms",
+      version: "2.9.9",
+      cat: "display",
+      icon: "💬",
+      tagline: "ป้ายข้อความ/โฮโลแกรมลอยกลางอากาศ",
+      what: "สร้างข้อความลอย (hologram) ได้ทุกที่ — ป้ายต้อนรับ, กระดานอันดับ, ป้ายร้าน, แสดงสถิติ รองรับ PlaceholderAPI จึงโชว์ค่าสดได้",
+      features: [
+        "วางข้อความลอยหลายบรรทัด + ไอคอนไอเทม",
+        "อัปเดตค่าสดผ่าน PlaceholderAPI",
+        "เบา ประสิทธิภาพดี",
+        "ทำกระดานอันดับ (leaderboard) ได้"
+      ],
+      commands: [
+        { cmd: "/dh", desc: "เมนูหลัก DecentHolograms", must: true },
+        { cmd: "/dh create <ชื่อ> <ข้อความ>", desc: "สร้างโฮโลแกรมใหม่", must: true },
+        { cmd: "/dh edit <ชื่อ>", desc: "แก้ไขโฮโลแกรม", must: false },
+        { cmd: "/dh list", desc: "ดูรายการโฮโลแกรม", must: false },
+        { cmd: "/dh delete <ชื่อ>", desc: "ลบโฮโลแกรม", must: false }
+      ],
+      integrations: [
+        { with: "BentoBox Level + PlaceholderAPI", text: "ป้ายอันดับเลเวลเกาะ Top 10 อัปเดตอัตโนมัติ" },
+        { with: "AuraSkills", text: "ป้ายโชว์อันดับผู้เล่นสกิลสูงสุดของเซิฟ" }
+      ]
+    },
+    {
+      id: "luckperms",
+      name: "LuckPerms",
+      version: "5.5.42",
+      cat: "admin",
+      icon: "🔑",
+      tagline: "จัดการยศ + สิทธิ์/คำสั่งของผู้เล่น",
+      what: "มาตรฐานวงการสำหรับจัดการ permission — สร้างยศ (สมาชิก/VIP/แอดมิน), กำหนดว่าแต่ละยศใช้คำสั่งอะไรได้, ตั้งสีชื่อ/แท็กแชต",
+      features: [
+        "สร้างกลุ่มยศ + ลำดับชั้น (inheritance)",
+        "ให้/ถอนสิทธิ์รายคนหรือรายยศ",
+        "ตั้ง prefix/suffix สีชื่อในแชต",
+        "แก้ผ่านเว็บ editor ได้"
+      ],
+      commands: [
+        { cmd: "/lp editor", desc: "เปิดลิงก์เว็บแก้สิทธิ์ (ง่ายสุด)", must: true },
+        { cmd: "/lp user <ชื่อ> parent set <ยศ>", desc: "ตั้งยศให้ผู้เล่น", must: true },
+        { cmd: "/lp group <ยศ> permission set <สิทธิ์> true", desc: "ให้สิทธิ์กับยศ", must: true },
+        { cmd: "/lp creategroup <ยศ>", desc: "สร้างยศใหม่", must: false },
+        { cmd: "/lp user <ชื่อ> info", desc: "ดูข้อมูล/สิทธิ์ผู้เล่น", must: false },
+        { cmd: "/lp sync", desc: "ซิงก์ฐานข้อมูลสิทธิ์", must: false }
+      ],
+      integrations: [
+        { with: "Vault + EssentialsX", text: "ยศจาก LuckPerms โผล่เป็น prefix สีในแชต EssentialsX อัตโนมัติ" },
+        { with: "DeluxeMenus", text: "เมนูเช็กยศ (requirement) ก่อนให้กดปุ่ม เช่นเมนู VIP" }
+      ]
+    },
+    {
+      id: "essentialsx",
+      name: "EssentialsX (+Chat +Spawn +Discord)",
+      version: "2.22.0-dev",
+      cat: "admin",
+      icon: "🧰",
+      tagline: "ชุดคำสั่งพื้นฐานเซิฟ (บ้าน/วาร์ป/คิท/แชต)",
+      what: "ชุดคำสั่งจำเป็นที่เกือบทุกเซิฟต้องมี — /home, /spawn, /tpa, /kit, /msg, ระบบเงินพื้นฐาน, จัดรูปแบบแชต และมีโมดูล Discord เชื่อมแชต (ยังไม่ตั้ง token)",
+      features: [
+        "บ้าน/วาร์ป/เทเลพอร์ต (/home /warp /tpa)",
+        "คิทของแจก (/kit) + ระบบเงินพื้นฐาน",
+        "Chat: จัดรูปแบบแชต + ใส่ prefix ยศ",
+        "Discord: เชื่อมแชตกับดิสคอร์ด (ยังไม่ตั้ง token)"
+      ],
+      commands: [
+        { cmd: "/sethome", desc: "ตั้งจุดบ้าน", must: true },
+        { cmd: "/home", desc: "วาร์ปกลับบ้าน", must: true },
+        { cmd: "/spawn", desc: "กลับจุดเกิดกลาง", must: true },
+        { cmd: "/tpa <ชื่อ>", desc: "ขอเทเลพอร์ตไปหาผู้เล่น", must: true },
+        { cmd: "/balance", desc: "เช็กเงินตัวเอง (ย่อ /bal)", must: true },
+        { cmd: "/msg <ชื่อ> <ข้อความ>", desc: "กระซิบหาผู้เล่น", must: false },
+        { cmd: "/pay <ชื่อ> <จำนวน>", desc: "โอนเงินให้คนอื่น", must: false },
+        { cmd: "/kit [ชื่อ]", desc: "รับชุดของแจก", must: false },
+        { cmd: "/back", desc: "กลับจุดตายล่าสุด", must: false },
+        { cmd: "/setspawn", desc: "[แอดมิน] ตั้งจุดเกิดกลาง", must: false }
+      ],
+      integrations: [
+        { with: "LuckPerms + Vault", text: "ดึงยศมาทำ prefix สีในแชต + ใช้เงินร่วมระบบ Vault" },
+        { with: "BentoBox", text: "ตั้ง /spawn เป็นพื้นที่กลางนอกเกาะให้วาร์ปกลับมาได้" }
+      ]
+    },
+    {
+      id: "placeholderapi",
+      name: "PlaceholderAPI",
+      version: "2.12.2",
+      cat: "util",
+      icon: "🔌",
+      tagline: "ตัวกลางดึงค่าจากปลั๊กอื่นมาแสดง (สำคัญมาก)",
+      what: "เป็น 'กาว' ให้ปลั๊กคุยกันด้วยตัวแปร (placeholder) เช่น %vault_eco_balance% = เงินผู้เล่น เอาไปโชว์ในเมนู/โฮโลแกรม/แชต ได้ทุกที่ ปลั๊ก UI แทบทุกตัวพึ่งมัน",
+      features: [
+        "ดึงค่าจากปลั๊กอื่นมาเป็นตัวแปรข้อความ",
+        "ติดตั้ง expansion เสริมต่อปลั๊ก",
+        "ใช้ได้ใน DeluxeMenus, DecentHolograms, แชต EssentialsX"
+      ],
+      commands: [
+        { cmd: "/papi ecloud download <ชื่อ>", desc: "โหลด expansion ของปลั๊กที่ต้องการ", must: true },
+        { cmd: "/papi reload", desc: "รีโหลดหลังเพิ่ม expansion", must: true },
+        { cmd: "/papi parse me <placeholder>", desc: "ทดสอบว่าตัวแปรคืนค่าอะไร", must: true },
+        { cmd: "/papi list", desc: "ดู expansion ที่ลงแล้ว", must: false },
+        { cmd: "/papi info <ชื่อ>", desc: "ดูข้อมูล expansion", must: false }
+      ],
+      integrations: [
+        { with: "DeluxeMenus + DecentHolograms", text: "เป็นแกนให้สองตัวนี้โชว์เงิน/เลเวล/ยศ แบบสด" },
+        { with: "AuraSkills + Vault + BentoBox", text: "ดึงเลเวลสกิล, เงิน, เลเวลเกาะ มารวมที่เดียว" }
+      ]
+    },
+    {
+      id: "multiverse",
+      name: "Multiverse-Core",
+      version: "5.6.1",
+      cat: "world",
+      icon: "🌍",
+      tagline: "จัดการหลายโลกในเซิฟเดียว",
+      what: "สร้าง/จัดการหลายโลก (overworld, nether, end, โลกเกม) ตั้งกฎแยกแต่ละโลก เทเลพอร์ตข้ามโลก เหมาะแยกโลกสปอว์น/มินิเกมออกจากโลกเกาะ",
+      features: [
+        "สร้าง/ลบ/โหลดได้หลายโลก",
+        "ตั้งกฎ/สภาพอากาศ/เวลา แยกแต่ละโลก",
+        "เทเลพอร์ตข้ามโลก"
+      ],
+      commands: [
+        { cmd: "/mv list", desc: "ดูโลกทั้งหมดในเซิฟ", must: true },
+        { cmd: "/mvtp <โลก>", desc: "วาร์ปไปโลกนั้น", must: true },
+        { cmd: "/mv create <ชื่อ> <ชนิด>", desc: "สร้างโลกใหม่ (normal/nether/end)", must: false },
+        { cmd: "/mv info <โลก>", desc: "ดูข้อมูลโลก", must: false },
+        { cmd: "/mv reload", desc: "รีโหลด config", must: false }
+      ],
+      integrations: [
+        { with: "AOneBlock", text: "แยกโลกเกาะ OneBlock ออกจากโลกสปอว์นกลาง จัดกฎคนละชุด" },
+        { with: "WorldGuard", text: "ตั้งเขตป้องกันแยกตามแต่ละโลก" }
+      ]
+    },
+    {
+      id: "worldedit",
+      name: "WorldEdit",
+      version: "7.4.2",
+      cat: "world",
+      icon: "🪄",
+      tagline: "แก้ไขบล็อกจำนวนมหาศาลในพริบตา",
+      what: "เครื่องมือสร้าง/แก้ภูมิประเทศของแอดมิน — เลือกพื้นที่แล้วถม/ลบ/ก๊อป/วางบล็อกทีละหมื่น ใช้สร้างสปอว์น/อารีนา/ตกแต่งแมพ",
+      features: [
+        "เลือกพื้นที่ด้วยขวาน แล้ว set/replace/copy/paste",
+        "สร้างทรง (sphere/cyl), undo/redo",
+        "วาง schematic (แมพสำเร็จรูป)"
+      ],
+      commands: [
+        { cmd: "//wand", desc: "รับขวานไม้สำหรับเลือกพื้นที่ (ซ้าย=มุม1 ขวา=มุม2)", must: true },
+        { cmd: "//set <บล็อก>", desc: "ถมบล็อกเต็มพื้นที่ที่เลือก", must: true },
+        { cmd: "//copy", desc: "ก๊อปพื้นที่ที่เลือก", must: true },
+        { cmd: "//paste", desc: "วางพื้นที่ที่ก๊อป", must: true },
+        { cmd: "//undo", desc: "ย้อนการแก้ไขล่าสุด", must: true },
+        { cmd: "//replace <เก่า> <ใหม่>", desc: "แทนบล็อกชนิดหนึ่งด้วยอีกชนิด", must: false },
+        { cmd: "//sphere <บล็อก> <รัศมี>", desc: "สร้างทรงกลม", must: false }
+      ],
+      integrations: [
+        { with: "WorldGuard", text: "เลือกพื้นที่ด้วย WorldEdit แล้วตีกรอบเขตป้องกันด้วย WorldGuard" },
+        { with: "BentoBox", text: "ปั้น/ตกแต่งพื้นที่สปอว์นกลางนอกระบบเกาะ" }
+      ]
+    },
+    {
+      id: "worldguard",
+      name: "WorldGuard",
+      version: "7.0.16",
+      cat: "world",
+      icon: "🛡️",
+      tagline: "ป้องกันพื้นที่ + ตั้งกฎในเขต",
+      what: "กำหนดเขต (region) แล้วตั้งกฎ — ห้ามทุบ/วาง, ห้าม PvP, ห้ามมอบเกิด ฯลฯ เหมาะกันสปอว์นและพื้นที่สำคัญไม่ให้ถูกทำลาย",
+      features: [
+        "สร้างเขตป้องกัน + กำหนดเจ้าของ/สมาชิก",
+        "ตั้ง flag: PvP, build, mob-spawning, greeting ฯลฯ",
+        "กันกริฟพื้นที่สาธารณะ"
+      ],
+      commands: [
+        { cmd: "/rg define <ชื่อ>", desc: "สร้างเขตจากพื้นที่ที่เลือกด้วย WorldEdit", must: true },
+        { cmd: "/rg flag <ชื่อ> pvp deny", desc: "ตั้งกฎเขต (ตัวอย่าง: ห้าม PvP)", must: true },
+        { cmd: "/rg addmember <ชื่อเขต> <ผู้เล่น>", desc: "เพิ่มสมาชิกที่แก้ในเขตได้", must: false },
+        { cmd: "/rg list", desc: "ดูรายการเขตทั้งหมด", must: false },
+        { cmd: "/rg info <ชื่อ>", desc: "ดูข้อมูล/กฎของเขต", must: false },
+        { cmd: "/rg remove <ชื่อ>", desc: "ลบเขต", must: false }
+      ],
+      integrations: [
+        { with: "WorldEdit", text: "ต้องใช้คู่กัน — WorldEdit เลือกพื้นที่ให้ WorldGuard ตีกรอบ" },
+        { with: "Multiverse", text: "ตั้งเขตป้องกันสปอว์นแยกในแต่ละโลก" }
+      ]
+    },
+    {
+      id: "spark",
+      name: "spark",
+      version: "มากับ Paper (bundled)",
+      cat: "util",
+      icon: "📊",
+      tagline: "เครื่องมือวัดประสิทธิภาพ/หาสาเหตุแลค",
+      what: "เครื่องมือ profiler ที่มากับ Paper — วัด TPS, CPU/RAM, หาว่าอะไรทำให้เซิฟแลค รายงานเป็นลิงก์เว็บ ใช้ตอนเซิฟกระตุก",
+      features: [
+        "ดู TPS / MSPT / การใช้ RAM สด",
+        "profiler หาตัวการแลค",
+        "รายงานออกมาเป็นลิงก์เว็บ"
+      ],
+      commands: [
+        { cmd: "/spark tps", desc: "ดู TPS ปัจจุบัน (ควรใกล้ 20)", must: true },
+        { cmd: "/spark profiler", desc: "เริ่มเก็บข้อมูลหาตัวการแลค", must: true },
+        { cmd: "/spark health", desc: "ดูสุขภาพเซิฟ (RAM/GC)", must: false },
+        { cmd: "/spark gc", desc: "ดูสถิติ garbage collection", must: false }
+      ],
+      integrations: [
+        { with: "ทุกปลั๊กอิน", text: "ตรวจว่าปลั๊กตัวไหนกินทรัพยากร เช่นถ้าลง ItemsAdder แล้วหนักจะเห็นทันที" }
+      ]
+    }
+  ]
+};

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ข้อมูลเซิร์ฟเวอร์ Minecraft — OneBlock RPG</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- หัวเว็บ: ข้อมูลเซิฟ -->
+    <header class="hero" id="hero"></header>
+
+    <!-- หน้าต่าง CMD สไตล์ Claude Code -->
+    <section class="console">
+      <div class="console-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="console-title">Claude Code — ผู้ดูแลเซิร์ฟเวอร์</span>
+      </div>
+      <div class="console-body" id="console"></div>
+    </section>
+
+    <!-- ปลั๊กอิน -->
+    <h2 class="sec-title">ปลั๊กอินที่ติดตั้ง (กดการ์ดเพื่อดูรายละเอียด)</h2>
+    <div class="filters" id="filters"></div>
+    <div class="grid" id="grid"></div>
+
+    <footer id="footer"></footer>
+  </div>
+
+  <!-- modal ดีเทลปลั๊กอิน -->
+  <div class="overlay" id="overlay">
+    <div class="modal" id="modal"></div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
