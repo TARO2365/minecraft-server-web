@@ -12,19 +12,44 @@
     <!-- หัวเว็บ: ข้อมูลเซิฟ -->
     <header class="hero" id="hero"></header>
 
-    <!-- หน้าต่าง CMD สไตล์ Claude Code -->
-    <section class="console">
-      <div class="console-bar">
-        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-        <span class="console-title">Claude Code — ผู้ดูแลเซิร์ฟเวอร์</span>
+    <!-- Web Panel: ควบคุมเซิร์ฟ + จอ CMD สด -->
+    <section class="panel">
+      <div class="panel-bar">
+        <span id="statusPill" class="status-pill off">● กำลังเช็ก...</span>
+        <span id="uptime" class="uptime"></span>
+        <div class="panel-btns">
+          <button id="btnStart" class="pbtn run" disabled>▶ Run เซิร์ฟ</button>
+          <button id="btnStop" class="pbtn stop" disabled>⏹ Stop</button>
+        </div>
       </div>
-      <div class="console-body" id="console"></div>
+      <div class="console">
+        <div class="console-bar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="console-title">Server Console — logs/latest.log (สด)</span>
+          <label class="autoscroll"><input type="checkbox" id="autoScroll" checked> เลื่อนตาม</label>
+        </div>
+        <div class="console-body live" id="console"></div>
+        <form class="cmd-bar" id="cmdForm">
+          <span class="cmd-slash">/</span>
+          <input type="text" id="cmdInput" placeholder="พิมพ์คำสั่ง console เช่น say สวัสดี, list, whitelist add ..." autocomplete="off">
+          <button type="submit" class="pbtn send">ส่ง</button>
+        </form>
+      </div>
+      <div class="quick-cmds" id="quickCmds"></div>
     </section>
 
     <!-- ปลั๊กอิน -->
     <h2 class="sec-title">ปลั๊กอินที่ติดตั้ง (กดการ์ดเพื่อดูรายละเอียด)</h2>
     <div class="filters" id="filters"></div>
     <div class="grid" id="grid"></div>
+
+    <!-- ปลั๊กอินที่ยังขาด -->
+    <h2 class="sec-title missing">ปลั๊กอินที่ยังขาด — ตามแผนพัฒนา</h2>
+    <div class="planned-grid" id="planned"></div>
+
+    <!-- ตัวอย่างการเชื่อมปลั๊กอิน -->
+    <h2 class="sec-title flows">ปลั๊กอินคุยกันยังไง — ตัวอย่างวงจรจริง</h2>
+    <div class="flows" id="flows"></div>
 
     <footer id="footer"></footer>
   </div>

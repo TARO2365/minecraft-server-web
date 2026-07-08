@@ -52,26 +52,165 @@
       </div>`;
   }
 
-  /* ---------- คอนโซล Claude Code ---------- */
-  function renderConsole() {
-    const s = D.server;
-    const lines = [
-      `<span class="pmt">claude@minecraft-server</span> <span class="dim">~/server new$</span> สรุปสถานะเซิฟ`,
-      `<span class="ok">✔</span> แกน: ${s.core} • ${s.java}`,
-      `<span class="ok">✔</span> ปลั๊กอินทั้งหมด: ${D.plugins.length} กลุ่ม (BentoBox + 16 addons, MythicMobs, AuraSkills ฯลฯ)`,
-      `<span class="ok">✔</span> บูตล่าสุด: Done ${s.bootTime} — ไม่มีพอร์ตชน`,
-      `<span class="warn">⚠</span> cs.yml (เช็ก) ของ Chat addon ผิดรูป — ไม่กระทบการรัน`,
-      `<span class="dim">// ${s.note}</span>`,
-      `<span class="pmt">claude@minecraft-server</span> <span class="dim">~/server new$</span> <span class="cursor"></span>`
+  /* ==========================================================
+     Web Panel — ควบคุมเซิร์ฟ + จอ CMD สด
+     ต้องเปิดผ่าน node server.js (http://localhost:8765) ถึงคุมได้
+     ถ้าเปิดเป็นไฟล์ตรงๆ/GitHub Pages จะเป็นโหมดดูอย่างเดียว
+     ========================================================== */
+  let panelOnline = false;   // ต่อ backend ได้ไหม
+  let srvOwned = false;      // เซิร์ฟถูกเปิดจากเว็บไหม (คุมได้เต็มที่)
+
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  /* ไฮไลต์สี log ตามความสำคัญ — อ่านปราดเดียวรู้ว่าอะไรพัง อะไรผ่าน */
+  function highlightLine(raw, type) {
+    let cls = "lg";
+    if (type === "system") cls = "lg-system";
+    else if (type === "input") cls = "lg-input";
+    else if (type === "stderr" || /\b(ERROR|SEVERE|Exception|Caused by:|THIS WILL CREATE BUGS)/i.test(raw)) cls = "lg-error";
+    else if (/\bWARN\b/.test(raw)) cls = "lg-warn";
+    else if (/Done \([\d.]+s\)!/.test(raw)) cls = "lg-done";
+    else if (/joined the game|left the game|logged in with|lost connection/.test(raw)) cls = "lg-player";
+
+    let html = esc(raw);
+    // timestamp [12:34:56] → จาง
+    html = html.replace(/^(\[\d{2}:\d{2}:\d{2}\])/, `<span class="lg-time">$1</span>`);
+    // แท็ก thread/ปลั๊กอิน [Server thread/INFO] [BentoBox] → สีฟ้า
+    html = html.replace(/(\[[^\]\[]{1,40}?(?:INFO|WARN|ERROR)[^\]\[]*?\])/g, `<span class="lg-tag">$1</span>`);
+    html = html.replace(/(\[(?:BentoBox|MythicMobs|AuraSkills|ItemsAdder|Citizens|TAB|LuckPerms|Vault|Essentials\w*|PlaceholderAPI|WorldGuard|FastAsyncWorldEdit|Multiverse[\w-]*|DeluxeMenus|EconomyShopGUI|DecentHolograms|ProtocolLib|spark)[^\]]*\])/g, `<span class="lg-plugin">$1</span>`);
+    // ตัวเลขเวลาบูต Done (37.7s) → เขียวเน้น
+    html = html.replace(/(Done \([\d.]+s\)!)/, `<span class="lg-done-strong">$1</span>`);
+    return `<div class="${cls}">${html}</div>`;
+  }
+
+  const consoleEl = $("#console");
+  let lineCount = 0;
+  function appendLog(raw, type) {
+    if (!consoleEl) return;
+    consoleEl.insertAdjacentHTML("beforeend", highlightLine(raw, type));
+    lineCount++;
+    if (lineCount > 600) { consoleEl.removeChild(consoleEl.firstChild); lineCount--; }
+    const as = $("#autoScroll");
+    if (!as || as.checked) consoleEl.scrollTop = consoleEl.scrollHeight;
+  }
+
+  function setStatus(running, owned) {
+    const pill = $("#statusPill");
+    srvOwned = owned;
+    if (!panelOnline) {
+      pill.className = "status-pill view"; pill.textContent = "◌ โหมดดูอย่างเดียว";
+      $("#btnStart").disabled = true; $("#btnStop").disabled = true;
+      return;
+    }
+    if (running && owned) { pill.className = "status-pill on"; pill.textContent = "● ออนไลน์ (เปิดจากเว็บ)"; }
+    else if (running) { pill.className = "status-pill ext"; pill.textContent = "● ออนไลน์ (เปิดจากหน้าต่าง CMD)"; }
+    else { pill.className = "status-pill off"; pill.textContent = "● ออฟไลน์"; }
+    $("#btnStart").disabled = running;
+    $("#btnStop").disabled = !(running && owned);
+  }
+
+  async function pollStatus() {
+    try {
+      const r = await fetch("/api/status");
+      const s = await r.json();
+      panelOnline = true;
+      setStatus(s.running, s.owned);
+      const up = $("#uptime");
+      up.textContent = s.uptimeSec ? `⏱ รันมา ${Math.floor(s.uptimeSec / 60)} นาที ${s.uptimeSec % 60} วิ` : "";
+    } catch {
+      panelOnline = false;
+      setStatus(false, false);
+    }
+  }
+
+  async function api(path, body) {
+    try {
+      const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+      const j = await r.json();
+      if (!j.ok) toast("⚠ " + j.error);
+      return j.ok;
+    } catch { toast("⚠ ต่อ backend ไม่ได้ — เปิดเว็บผ่าน start-web.bat ก่อน"); return false; }
+  }
+
+  function initPanel() {
+    if (!consoleEl) return;
+    // ปุ่ม Run / Stop
+    $("#btnStart").addEventListener("click", async () => {
+      $("#btnStart").disabled = true;
+      if (await api("/api/start")) toast("▶ กำลังสตาร์ทเซิร์ฟ... ดู log ข้างล่างได้เลย");
+      pollStatus();
+    });
+    $("#btnStop").addEventListener("click", async () => {
+      if (await api("/api/stop")) toast("⏹ สั่งปิดแล้ว — รอเซฟโลก");
+      pollStatus();
+    });
+    // ช่องพิมพ์คำสั่ง
+    $("#cmdForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const inp = $("#cmdInput");
+      const cmd = inp.value.trim();
+      if (!cmd) return;
+      if (await api("/api/command", { cmd })) inp.value = "";
+    });
+    // ปุ่มคำสั่งด่วน
+    const quick = [
+      ["list", "ใครออนบ้าง"], ["say สวัสดีชาวเซิฟ!", "ประกาศ"], ["spark tps", "เช็ก TPS"],
+      ["whitelist list", "ดู whitelist"], ["save-all", "เซฟโลกเดี๋ยวนี้"]
     ];
-    const el = $("#console"); el.innerHTML = "";
-    let i = 0;
-    (function typeLine() {
-      if (i >= lines.length) return;
-      const div = document.createElement("div");
-      div.innerHTML = lines[i]; el.appendChild(div); i++;
-      setTimeout(typeLine, 380);
-    })();
+    $("#quickCmds").innerHTML = `<span class="qlabel">คำสั่งด่วน:</span>` + quick.map(([c, l]) =>
+      `<button class="qcmd" data-qcmd="${c}">${l} <code>/${c.split(" ")[0]}</code></button>`).join("");
+
+    // ต่อ log stream (SSE)
+    try {
+      const es = new EventSource("/api/logs");
+      es.onmessage = (e) => {
+        try { const m = JSON.parse(e.data); appendLog(m.line, m.type); } catch {}
+      };
+      es.onerror = () => { /* backend หลุด — pollStatus จะสลับเป็นโหมดดูอย่างเดียวเอง */ };
+    } catch {}
+
+    pollStatus();
+    setInterval(pollStatus, 3000);
+
+    // ถ้าเปิดแบบ file:// หรือ GitHub Pages — โชว์วิธีเปิดโหมดควบคุม
+    if (location.protocol === "file:" || location.hostname.endsWith("github.io")) {
+      appendLog("โหมดดูอย่างเดียว — อยากควบคุมเซิร์ฟจากเว็บ:", "system");
+      appendLog("1) ดับเบิลคลิก start-web.bat ในโฟลเดอร์ minecraft-server-web", "system");
+      appendLog("2) เปิด http://localhost:8765", "system");
+    }
+  }
+
+  /* ---------- ปลั๊กอินที่ยังขาด ---------- */
+  function renderPlanned() {
+    const el = $("#planned");
+    if (!el || !D.planned) return;
+    const phaseColor = { 1: "var(--red)", 2: "var(--orange)", 3: "var(--purple)" };
+    el.innerHTML = D.planned.map(p => `
+      <div class="pcard">
+        <div class="ptop">
+          <span class="pico">${p.icon}</span>
+          <div><h3>${p.name}</h3><span class="pstatus">${p.status}</span></div>
+          <span class="phase" style="background:${phaseColor[p.phase] || "var(--navy)"}">เฟส ${p.phase}</span>
+        </div>
+        <div class="pwhy">${p.why}</div>
+        <div class="ppairs">🔗 ${p.pairs}</div>
+      </div>`).join("");
+  }
+
+  /* ---------- ตัวอย่างวงจรการเชื่อมปลั๊กอิน ---------- */
+  function renderFlows() {
+    const el = $("#flows");
+    if (!el || !D.flows) return;
+    el.innerHTML = D.flows.map(f => `
+      <div class="flow">
+        <div class="flow-title">${f.icon} ${f.title}</div>
+        <div class="flow-steps">
+          ${f.steps.map((s, i) => `
+            ${i ? `<div class="flow-arrow">▼</div>` : ""}
+            <div class="flow-step"><span class="flow-plug">${s.plug}</span><span class="flow-text">${s.text}</span></div>`).join("")}
+        </div>
+        <div class="flow-note">💡 ${f.note}</div>
+      </div>`).join("");
   }
 
   /* ---------- ฟิลเตอร์หมวด ---------- */
@@ -206,5 +345,5 @@
 
   $("#footer").innerHTML = `รวบรวมจากเซิฟจริง • แก้ข้อมูลที่ <b>data.js</b> ไฟล์เดียว • ดูแลโดย Claude Code`;
 
-  renderHero(); renderConsole(); renderFilters(); renderGrid();
+  renderHero(); initPanel(); renderFilters(); renderGrid(); renderPlanned(); renderFlows();
 })();

@@ -502,5 +502,128 @@ window.MC = {
         { with: "ทุกปลั๊กอิน", text: "ตรวจว่าปลั๊กตัวไหนกินทรัพยากร เช่นถ้าลง ItemsAdder แล้วหนักจะเห็นทันที" }
       ]
     }
+  ],
+
+  /* ---------- ปลั๊กอินที่ยังขาด (ตามแผนเฟสใน CLAUDE.md) ---------- */
+  planned: [
+    {
+      name: "CoreProtect",
+      phase: 1,
+      icon: "🕵️",
+      why: "log ทุกการทุบ/วาง/เปิดกล่อง + rollback ได้ — ของสำคัญที่สุดที่ยังขาด ต้องมีก่อนเปิดให้เพื่อนเข้า ไม่งั้นโดนกริฟแล้วกู้ไม่ได้ (เช็กแล้ว: v24.0 รองรับ 1.21.11 ✓ ไม่มี dependency โหลดจาก Modrinth)",
+      status: "พร้อมติดตั้งเลย (ฟรี)",
+      pairs: "ใช้คู่กับ WorldGuard: WorldGuard กันพื้นที่ / CoreProtect กู้ความเสียหายที่หลุดมา"
+    },
+    {
+      name: "MMOItems + MythicLib",
+      phase: 1,
+      icon: "⚔️",
+      why: "หัวใจไอเทม RPG — อาวุธ/เกราะมี stat, tier, ตีบวก ตามแผนโซนมิดกาเรีย (MythicLib ฟรี / MMOItems €19.99 บน SpigotMC — หน้าร้าน tested ถึง 1.21 ควรถาม Discord ของ PhoenixDevt ว่ารองรับ 1.21.11 หรือยัง ก่อนจ่ายเงิน)",
+      status: "รอซื้อ (€19.99) — เช็กเวอร์ชันก่อน",
+      pairs: "⚠ ลงแล้วต้องปิด REAL blocks ใน config ItemsAdder กันบล็อกตีกัน (มีวิธีในวิกิ IA) / เกราะ skin ของ MMOItems ใช้กับเกราะ IA ไม่ได้ / เชื่อม MythicMobs ให้มอนดรอปไอเทม MMOItems"
+    },
+    {
+      name: "ระบบ backup อัตโนมัติ",
+      phase: 1,
+      icon: "💾",
+      why: "ตอนนี้มีแค่ git (เก็บ config ไม่เก็บโลก) — ต้องมี backup โลกอัตโนมัติก่อนเปิดจริง จะใช้ plugin หรือ task scheduler ของ Windows ก็ได้",
+      status: "รอเลือกวิธี",
+      pairs: "ทำงานร่วมกับ CoreProtect: backup กู้ทั้งโลก / CoreProtect กู้เฉพาะจุด"
+    },
+    {
+      name: "MMOCore",
+      phase: 2,
+      icon: "🧙",
+      why: "ระบบอาชีพ/คลาส (รวม Gunslinger ตามแผน) + เลเวลผู้เล่น ค่ายเดียวกับ MMOItems ทำงานเข้ากันดี (€19.99 — เช็กความเข้ากับ 1.21.11 พร้อม MMOItems ทีเดียว)",
+      status: "รอเฟส 2 (€19.99)",
+      pairs: "MMOItems กำหนด requirement อาชีพ/เลเวลบนไอเทมได้"
+    },
+    {
+      name: "BetonQuest",
+      phase: 2,
+      icon: "📜",
+      why: "ระบบเควสหลัก+รายวัน — เควสแรก 'ล่าพูริ 10 ตัว' ของโซนมิดกาเรียรอปลั๊กนี้ (เช็กแล้ว: v3.0.2 รองรับ 1.21.11 ✓ — เริ่มเขียนเควสที่ 3.x เลย เพราะ syntax เปลี่ยนจาก 2.x เยอะ)",
+      status: "รอเฟส 2 (ฟรี, รองรับแล้ว)",
+      pairs: "Citizens เป็นตัว NPC ให้กด / MythicMobs นับยอดฆ่ามอนคัสตอมได้"
+    },
+    {
+      name: "ModelEngine",
+      phase: 2,
+      icon: "🦖",
+      why: "โมเดลมอน 3D ซับซ้อน (บอสลูนาเรกซ์ กระต่ายยักษ์) — MythicMobs เรียกใช้โมเดลได้ตรง (เช็กแล้ว: R4.0.9 รองรับ 1.19.4–1.21.11 ✓ ราคา $39.99 บน MythicCraft)",
+      status: "รอเฟส 2 ($39.99)",
+      pairs: "MythicMobs + ModelEngine = บอสมีท่าทาง/animation จริง"
+    },
+    {
+      name: "Anti-cheat (GrimAC แนะนำ)",
+      phase: 2,
+      icon: "🚫",
+      why: "กันโกงก่อนเปิดกว้าง — researcher แนะนำ GrimAC: ฟรี open source รองรับ 1.21.11 เป็นทางการ (v2.3.73) ไม่ต้องพึ่ง ProtocolLib / Vulcan ($19.99) เก็บไว้เป็นตัวเสริมด้าน combat ถ้า GrimAC ไม่พอ",
+      status: "รอเฟส 2 (GrimAC ฟรี)",
+      pairs: "⚠ สกิล MythicMobs ที่ดัน/วาร์ปผู้เล่นอาจโดนจับผิด (false positive) — ต้องตั้ง exemption ใน config"
+    },
+    {
+      name: "Parties / Guilds",
+      phase: 2,
+      icon: "🤝",
+      why: "ตีบอสเป็นปาร์ตี้ + ระบบกิลด์",
+      status: "รอเฟส 2",
+      pairs: "แชร์ XP AuraSkills ในปาร์ตี้ / ตีบอสโซนด้วยกัน"
+    },
+    {
+      name: "Crates + AuctionHouse + Tebex + VotingPlugin",
+      phase: 3,
+      icon: "🎁",
+      why: "ชุด retention + monetization: กล่องสุ่ม, ตลาดประมูล, ร้านเติมเงิน, โหวตรับรางวัล",
+      status: "รอเฟส 3",
+      pairs: "รางวัลทั้งหมดวิ่งผ่าน Vault + ItemsAdder cosmetic ไม่ขายพลัง (ตามหลัก ไม่ pay-to-win)"
+    }
+  ],
+
+  /* ---------- ตัวอย่างวงจรการเชื่อมปลั๊กอิน (เห็นภาพจริง) ---------- */
+  flows: [
+    {
+      title: "วงจรเงินหลักของเซิฟ",
+      icon: "💰",
+      steps: [
+        { plug: "MythicMobs", text: "มอนโซนมิดกาเรียดรอปเงิน + วัตถุดิบ (เจลลี่เหนียว, ขนกระต่าย)" },
+        { plug: "Vault", text: "เงินเข้ากระเป๋ากลาง — ทุกปลั๊กเห็นยอดเดียวกัน" },
+        { plug: "EconomyShopGUI", text: "ผู้เล่นกด /sellall ขายวัตถุดิบ → ได้เงินเพิ่ม" },
+        { plug: "BentoBox Bank", text: "เก็บเงินเข้าธนาคารเกาะ หรือเอาไปซื้อของต่อ" }
+      ],
+      note: "เงินก้อนเดียวไหลทั้งระบบ — นี่คือเหตุผลที่ Vault สำคัญแม้ไม่มีคำสั่งอะไรเลย"
+    },
+    {
+      title: "เควสแรกของผู้เล่นใหม่ (แผนโซนมิดกาเรีย)",
+      icon: "🗺️",
+      steps: [
+        { plug: "Citizens", text: "NPC หน้าประตูเมือง — คลิกเพื่อคุย" },
+        { plug: "DeluxeMenus", text: "เปิดเมนูเควส 'ล่าพูริ 10 ตัว' (เฟสแรกใช้เมนูไปก่อน รอ BetonQuest)" },
+        { plug: "MythicMobs", text: "พูริ (เจลลี่ชมพู) ตายแล้วดรอปเจลลี่เหนียว 60%" },
+        { plug: "ItemsAdder", text: "เจลลี่เหนียว = ไอเทมคัสตอมมี texture เอง" },
+        { plug: "TAB", text: "scoreboard ข้างจอโชว์ยอดเงิน/เลเวลที่เพิ่มขึ้น" }
+      ],
+      note: "ผู้เล่นเห็น 'ตัวเลขดีขึ้น' ครบวงจรใน 10 นาทีแรก ตามหลักออกแบบโซน"
+    },
+    {
+      title: "ป้ายอันดับเกาะที่สปอว์น",
+      icon: "🏆",
+      steps: [
+        { plug: "BentoBox Level", text: "คำนวณเลเวลเกาะจากบล็อกที่วาง" },
+        { plug: "PlaceholderAPI", text: "แปลงเป็นตัวแปร %level_top% ให้ปลั๊กอื่นดึง" },
+        { plug: "DecentHolograms", text: "ป้ายลอย Top 10 เกาะ อัปเดตเองที่สปอว์น" }
+      ],
+      note: "สามตัวนี้ไม่รู้จักกันเลย แต่คุยกันผ่าน PlaceholderAPI ตรงกลาง"
+    },
+    {
+      title: "HUD สถานะสไตล์ Ragnarok (แผนเฟส 2)",
+      icon: "🎮",
+      steps: [
+        { plug: "AuraSkills", text: "เก็บค่า HP / มานา / เลเวลสกิลผู้เล่น" },
+        { plug: "PlaceholderAPI", text: "ส่งค่าเป็นตัวแปรสด" },
+        { plug: "ItemsAdder", text: "วาด HUD หลอดเลือด/มานาแบบ RO ทับหน้าจอผ่าน resource pack" }
+      ],
+      note: "นี่คือเหตุผลที่ลง ItemsAdder ไว้ — เป็นฐานของ UI เอกลักษณ์เซิฟ"
+    }
   ]
 };
