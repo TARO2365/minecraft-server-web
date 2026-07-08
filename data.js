@@ -1,7 +1,7 @@
 /* ============================================================
    ข้อมูลเซิร์ฟเวอร์ + ปลั๊กอิน (ภาษาไทย)
    แก้ที่ไฟล์นี้ไฟล์เดียว — หน้าเว็บดึงไปแสดงอัตโนมัติ
-   ตรวจจากเซิฟจริง: 2026-06-14 (Paper 1.21.11 build 130)
+   ตรวจจากเซิฟจริง: 2026-07-08 (Paper 1.21.11 build 130 — หลังลบปลั๊กอินซ้ำ)
 
    commands: [{ cmd, desc, must:true=คำสั่งที่ต้องรู้ }]
    integrations: [{ with, text }]
@@ -12,7 +12,7 @@ window.MC = {
   /* ---------- รายละเอียดเซิร์ฟเวอร์ ---------- */
   server: {
     name: "เซิร์ฟเวอร์ OneBlock RPG",
-    tagline: "OneBlock Skyblock + ไอเทม RPG โมเดล 3D",
+    tagline: "MMORPG Hub + OneBlock เป็นบ้านส่วนตัว (ธีมแรงบันดาลใจ Ragnarok)",
     core: "Paper 1.21.11 (build 130)",
     mc: "Minecraft 1.21.11",
     java: "Java 24 (JDK 24 — Paper ต้องการ 21+)",
@@ -20,8 +20,8 @@ window.MC = {
     address: "localhost:25565",
     op: "Oxygenlave",
     github: "https://github.com/TARO2365/minecraft-server",
-    bootTime: "~27–30 วินาที",
-    note: "ดูแล/แก้ไขผ่าน Claude Code (หัวหน้างาน + subagent: researcher / docs-thai / installer / verifier)"
+    bootTime: "~38 วินาที (ตรวจ 2026-07-08)",
+    note: "ดูแล/แก้ไขผ่าน Claude Code (ชัคกี้ CCO + subagent: researcher / docs-thai / installer / verifier)"
   },
 
   /* ---------- หมวดหมู่ (สีการ์ด) ---------- */
@@ -40,7 +40,7 @@ window.MC = {
     {
       id: "bentobox",
       name: "BentoBox + AOneBlock",
-      version: "3.14.2 / AOneBlock 1.23.0",
+      version: "3.17.0 / AOneBlock 1.25.0",
       cat: "island",
       icon: "🧱",
       tagline: "หัวใจของเซิฟ — ระบบเกาะ OneBlock ทั้งหมด",
@@ -82,7 +82,7 @@ window.MC = {
         "ออกแบบมอนสเตอร์/บอสเองทุกค่า (HP, ดาเมจ, สกิล, AI)",
         "ระบบสกิล/เมคานิกซับซ้อน (ยิงกระสุน, AOE, เรียกลูกสมุน)",
         "ตั้ง drop table + spawner เองได้",
-        "เชื่อมไอเทม 3D ของ Nexo และโมเดลของ ModelEngine ได้"
+        "เชื่อมไอเทมคัสตอมของ ItemsAdder และโมเดลของ ModelEngine ได้"
       ],
       commands: [
         { cmd: "/mm", desc: "เมนูหลัก MythicMobs", must: true },
@@ -95,8 +95,9 @@ window.MC = {
       ],
       integrations: [
         { with: "Vault", text: "ตั้งให้บอส/มอนสเตอร์ดรอปเงินเข้าระบบเศรษฐกิจตรงๆ" },
-        { with: "Nexo (ที่จะซื้อ)", text: "ให้มอนสเตอร์สวมใส่/ดรอปไอเทม 3D ของ Nexo เช่น nexo:forest_sword" },
-        { with: "AOneBlock", text: "วางบอสประจำเฟส OneBlock ให้ผ่านก่อนไปเฟสถัดไป" }
+        { with: "ItemsAdder", text: "ให้มอนสเตอร์สวมใส่/ดรอปไอเทมคัสตอมของ ItemsAdder" },
+        { with: "AOneBlock", text: "วางบอสประจำเฟส OneBlock ให้ผ่านก่อนไปเฟสถัดไป" },
+        { with: "แผนโซนมิดกาเรีย", text: "ใช้สร้างมอน 4 ตัว + บอสลูนาเรกซ์ ของโซนแรก (ดู docs/zone-01-midgaria.md)" }
       ]
     },
     {
@@ -111,7 +112,7 @@ window.MC = {
         "หลายสกิล: Mining, Farming, Foraging, Fighting, Fishing ฯลฯ",
         "ปลดล็อก ability/บัฟตามเลเวล (ดับเบิลดรอป, เพิ่มดาเมจ)",
         "มี stat (HP, ดาเมจ, ความเร็ว) ที่โตตามสกิล",
-        "บล็อกคัสตอมของ Nexo/Oraxen ขุดแล้วได้ XP (ItemsAdder ไม่ได้)"
+        "⚠ บล็อกคัสตอมของ ItemsAdder ขุดแล้วไม่ได้ XP สกิล (ข้อจำกัดที่ต้องเผื่อตอนออกแบบ)"
       ],
       commands: [
         { cmd: "/skills", desc: "เปิดเมนูสกิลทั้งหมด (ย่อ /sk)", must: true },
@@ -123,7 +124,7 @@ window.MC = {
         { cmd: "/auraskills reload", desc: "[แอดมิน] รีโหลด config", must: false }
       ],
       integrations: [
-        { with: "Nexo / Oraxen", text: "บล็อกคัสตอมขุดแล้วได้ XP สกิล (จุดที่ ItemsAdder ทำไม่ได้)" },
+        { with: "ItemsAdder", text: "⚠ ข้อจำกัด: บล็อกคัสตอมของ ItemsAdder ขุดแล้วไม่ได้ XP สกิล — ถ้าทำเหมือง/ฟาร์มคัสตอมต้องออกแบบเผื่อ" },
         { with: "Vault + EconomyShopGUI", text: "สกิลฟาร์มเพิ่มผลผลิต → ขายในร้านได้เงินมากขึ้น" },
         { with: "PlaceholderAPI", text: "ดึงเลเวลสกิลไปโชว์ในเมนู DeluxeMenus/โฮโลแกรม" }
       ]
@@ -156,7 +157,7 @@ window.MC = {
     {
       id: "economyshopgui",
       name: "EconomyShopGUI",
-      version: "7.0.3",
+      version: "7.0.4",
       cat: "economy",
       icon: "🛒",
       tagline: "ร้านค้ากลางแบบ GUI ซื้อ-ขายไอเทม",
@@ -201,7 +202,7 @@ window.MC = {
     {
       id: "decentholograms",
       name: "DecentHolograms",
-      version: "2.9.9",
+      version: "2.10.0",
       cat: "display",
       icon: "💬",
       tagline: "ป้ายข้อความ/โฮโลแกรมลอยกลางอากาศ",
@@ -253,17 +254,17 @@ window.MC = {
     },
     {
       id: "essentialsx",
-      name: "EssentialsX (+Chat +Spawn +Discord)",
-      version: "2.22.0-dev",
+      name: "EssentialsX (+Chat +Spawn)",
+      version: "2.22.0",
       cat: "admin",
       icon: "🧰",
       tagline: "ชุดคำสั่งพื้นฐานเซิฟ (บ้าน/วาร์ป/คิท/แชต)",
-      what: "ชุดคำสั่งจำเป็นที่เกือบทุกเซิฟต้องมี — /home, /spawn, /tpa, /kit, /msg, ระบบเงินพื้นฐาน, จัดรูปแบบแชต และมีโมดูล Discord เชื่อมแชต (ยังไม่ตั้ง token)",
+      what: "ชุดคำสั่งจำเป็นที่เกือบทุกเซิฟต้องมี — /home, /spawn, /tpa, /kit, /msg, ระบบเงินพื้นฐาน, จัดรูปแบบแชต (โมดูล Discord ถอดออกแล้ว — ค่อยลงใหม่ถ้าจะเชื่อมดิสคอร์ด)",
       features: [
         "บ้าน/วาร์ป/เทเลพอร์ต (/home /warp /tpa)",
         "คิทของแจก (/kit) + ระบบเงินพื้นฐาน",
         "Chat: จัดรูปแบบแชต + ใส่ prefix ยศ",
-        "Discord: เชื่อมแชตกับดิสคอร์ด (ยังไม่ตั้ง token)"
+        "Spawn: จุดเกิดกลางของเซิฟ (/spawn /setspawn)"
       ],
       commands: [
         { cmd: "/sethome", desc: "ตั้งจุดบ้าน", must: true },
@@ -334,16 +335,17 @@ window.MC = {
     },
     {
       id: "worldedit",
-      name: "WorldEdit",
-      version: "7.4.2",
+      name: "FastAsyncWorldEdit (FAWE)",
+      version: "2.15.2",
       cat: "world",
       icon: "🪄",
-      tagline: "แก้ไขบล็อกจำนวนมหาศาลในพริบตา",
-      what: "เครื่องมือสร้าง/แก้ภูมิประเทศของแอดมิน — เลือกพื้นที่แล้วถม/ลบ/ก๊อป/วางบล็อกทีละหมื่น ใช้สร้างสปอว์น/อารีนา/ตกแต่งแมพ",
+      tagline: "แก้ไขบล็อกจำนวนมหาศาลในพริบตา (WorldEdit เวอร์ชันเร็ว)",
+      what: "WorldEdit สายพันธุ์เร็ว — ทำงานแบบ async ไม่ทำเซิฟค้างตอนแก้บล็อกเยอะๆ คำสั่ง // ใช้เหมือน WorldEdit เดิมทุกอย่าง (ตัวเก่า worldedit-bukkit ถอดออกแล้วเพราะชนกัน) ใช้สร้างสปอว์น/อารีนา/ตกแต่งแมพ",
       features: [
         "เลือกพื้นที่ด้วยขวาน แล้ว set/replace/copy/paste",
         "สร้างทรง (sphere/cyl), undo/redo",
-        "วาง schematic (แมพสำเร็จรูป)"
+        "วาง schematic (แมพสำเร็จรูป)",
+        "เร็วกว่า WorldEdit เดิมมาก — เหมาะกับงานแมพใหญ่อย่างเมือง hub"
       ],
       commands: [
         { cmd: "//wand", desc: "รับขวานไม้สำหรับเลือกพื้นที่ (ซ้าย=มุม1 ขวา=มุม2)", must: true },
@@ -383,6 +385,98 @@ window.MC = {
       integrations: [
         { with: "WorldEdit", text: "ต้องใช้คู่กัน — WorldEdit เลือกพื้นที่ให้ WorldGuard ตีกรอบ" },
         { with: "Multiverse", text: "ตั้งเขตป้องกันสปอว์นแยกในแต่ละโลก" }
+      ]
+    },
+    {
+      id: "itemsadder",
+      name: "ItemsAdder",
+      version: "4.0.17 (beta build)",
+      cat: "display",
+      icon: "🎨",
+      tagline: "ไอเทม/บล็อก/HUD คัสตอมผ่าน resource pack",
+      what: "สร้างไอเทม บล็อก เฟอร์นิเจอร์ อีโมจิ และ HUD คัสตอมด้วย texture pack — เป็นฐานของแผน HUD สถานะตัวละครสไตล์ Ragnarok ⚠ เวอร์ชันที่ลงเป็น beta build (ผู้พัฒนาเตือนว่าอาจมีบั๊ก ควรมี backup)",
+      features: [
+        "ไอเทม/บล็อก/เฟอร์นิเจอร์คัสตอมพร้อม texture 3D",
+        "HUD คัสตอม (หลอดเลือด/มานา/เลเวล สไตล์ RO)",
+        "สร้าง resource pack ให้อัตโนมัติ ผู้เล่นโหลดตอนเข้าเซิฟ",
+        "⚠ ถ้าลง MMOItems เพิ่ม ต้องปิด REAL blocks (mushroom) ใน config กันบล็อกตีกัน"
+      ],
+      commands: [
+        { cmd: "/ia", desc: "เปิดเมนูไอเทมคัสตอมทั้งหมด", must: true },
+        { cmd: "/iazip", desc: "[แอดมิน] สร้าง resource pack ใหม่หลังแก้ของ", must: true },
+        { cmd: "/iaget <ชื่อ>", desc: "[แอดมิน] รับไอเทมคัสตอมเข้ากระเป๋า", must: false },
+        { cmd: "/iareload", desc: "[แอดมิน] รีโหลด config", must: false }
+      ],
+      integrations: [
+        { with: "PlaceholderAPI", text: "HUD ดึงค่าสถานะผู้เล่น (HP/เงิน/เลเวล) มาแสดงสด" },
+        { with: "MythicMobs", text: "มอนสเตอร์ดรอปไอเทมคัสตอม เช่น วัตถุดิบ/การ์ดมอนตามแผนโซน" },
+        { with: "ProtocolLib", text: "ใช้ ProtocolLib จัดการ packet ฝั่ง client" }
+      ]
+    },
+    {
+      id: "citizens",
+      name: "Citizens",
+      version: "2.0.43 (build 4210)",
+      cat: "rpg",
+      icon: "🧍",
+      tagline: "NPC ในเมือง — เควส/ร้านค้า/ตัวละคร",
+      what: "สร้าง NPC ยืนในเมือง hub — ตั้งชื่อ ใส่สกิน ให้คลิกแล้วสั่งคำสั่ง/เปิดเมนู เป็นฐานของ NPC เควสและร้านค้าตามแผนเฟส 1",
+      features: [
+        "สร้าง NPC รูปผู้เล่น/มอบ พร้อมสกินคัสตอม",
+        "คลิก NPC แล้วสั่งคำสั่ง (เปิดร้าน/เมนู/เควส)",
+        "NPC เดินตามเส้นทางที่กำหนดได้",
+        "รองรับต่อยอดเป็น NPC เควสกับ BetonQuest (แผนเฟส 2)"
+      ],
+      commands: [
+        { cmd: "/npc create <ชื่อ>", desc: "[แอดมิน] สร้าง NPC ตรงจุดที่ยืน", must: true },
+        { cmd: "/npc select", desc: "[แอดมิน] เลือก NPC ที่มองอยู่", must: true },
+        { cmd: "/npc skin <ชื่อผู้เล่น>", desc: "[แอดมิน] เปลี่ยนสกิน NPC", must: false },
+        { cmd: "/npc command add <คำสั่ง>", desc: "[แอดมิน] ให้ NPC สั่งคำสั่งเมื่อถูกคลิก", must: false },
+        { cmd: "/npc remove", desc: "[แอดมิน] ลบ NPC ที่เลือก", must: false }
+      ],
+      integrations: [
+        { with: "DeluxeMenus", text: "คลิก NPC เปิดเมนู GUI เช่น NPC พ่อค้าเปิดร้าน EconomyShopGUI" },
+        { with: "แผนโซนมิดกาเรีย", text: "NPC แจกเควสแรก 'ล่าพูริ 10 ตัว' หน้าประตูเมือง" }
+      ]
+    },
+    {
+      id: "tab",
+      name: "TAB",
+      version: "6.1.0",
+      cat: "display",
+      icon: "📑",
+      tagline: "จัด tablist / scoreboard / ชื่อหัวผู้เล่น",
+      what: "ปรับหน้า Tab list, scoreboard ข้างจอ, และป้ายชื่อเหนือหัวผู้เล่น — ใส่ยศ สี และค่าจาก PlaceholderAPI ได้ ทำให้เซิฟดูเป็นมืออาชีพ",
+      features: [
+        "จัด tablist เอง (header/footer/เรียงตามยศ)",
+        "scoreboard ข้างจอโชว์เงิน/เลเวล/ข้อมูลเซิฟ",
+        "ป้ายชื่อเหนือหัว + prefix ยศจาก LuckPerms",
+        "รองรับ PlaceholderAPI ทุกจุด"
+      ],
+      commands: [
+        { cmd: "/tab reload", desc: "[แอดมิน] รีโหลด config", must: true },
+        { cmd: "/tab parse <ผู้เล่น> <placeholder>", desc: "[แอดมิน] ทดสอบ placeholder", must: false }
+      ],
+      integrations: [
+        { with: "LuckPerms + PlaceholderAPI", text: "tablist เรียงตามยศ + โชว์เงิน/เลเวลสกิลสด" },
+        { with: "AuraSkills + BentoBox", text: "scoreboard โชว์เลเวลสกิลกับเลเวลเกาะไว้ข้างจอ" }
+      ]
+    },
+    {
+      id: "protocollib",
+      name: "ProtocolLib",
+      version: "5.5.0-SNAPSHOT",
+      cat: "util",
+      icon: "📡",
+      tagline: "ไลบรารี packet ให้ปลั๊กอื่นใช้ (เบื้องหลัง)",
+      what: "ปลั๊กอินไลบรารี — เปิดทางให้ปลั๊กอื่นแก้ packet ที่ส่งระหว่างเซิฟกับ client ไม่มีคำสั่งผู้เล่น ลงไว้เพราะ ItemsAdder ต้องใช้",
+      features: [
+        "เป็น API กลางเรื่อง packet ให้ปลั๊กอื่น",
+        "ทำงานเบื้องหลัง — ไม่มีคำสั่งสำหรับผู้เล่น"
+      ],
+      commands: [],
+      integrations: [
+        { with: "ItemsAdder", text: "ใช้จัดการ packet ของไอเทม/HUD คัสตอม" }
       ]
     },
     {
