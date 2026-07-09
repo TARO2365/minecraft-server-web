@@ -49,6 +49,7 @@
         <span class="chip"><b>OP:</b> ${s.op}</span>
         <span class="chip"><b>บูต:</b> ${s.bootTime}</span>
         <span class="chip"><b>GitHub:</b> <a href="${s.github}" target="_blank">repo</a></span>
+        <span class="chip"><b>📘 แผนเซิร์ฟ:</b> <a href="plan.html">เปิดดู interactive</a></span>
       </div>`;
   }
 

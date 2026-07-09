@@ -26,13 +26,13 @@ window.MC = {
 
   /* ---------- หมวดหมู่ (สีการ์ด) ---------- */
   categories: {
-    island:  { label: "ระบบเกาะ / OneBlock", color: "#2f80ed" },
-    rpg:     { label: "RPG / สกิล / มอนสเตอร์", color: "#f2994a" },
-    economy: { label: "เมนู / ร้านค้า / เศรษฐกิจ", color: "#27ae60" },
-    display: { label: "แสดงผล / ตกแต่ง", color: "#9b51e0" },
-    admin:   { label: "สิทธิ์ / จัดการผู้เล่น", color: "#eb5757" },
-    world:   { label: "โลก / แก้ไข / ป้องกัน", color: "#2d4059" },
-    util:    { label: "เสริม / หลังบ้าน", color: "#f2c94c" }
+    island:  { label: "ระบบเกาะ / OneBlock", color: "#3b82e0" },
+    rpg:     { label: "RPG / สกิล / มอนสเตอร์", color: "#e0813d" },
+    economy: { label: "เมนู / ร้านค้า / เศรษฐกิจ", color: "#2fa35c" },
+    display: { label: "แสดงผล / ตกแต่ง", color: "#9b6bd6" },
+    admin:   { label: "สิทธิ์ / จัดการผู้เล่น", color: "#d95757" },
+    world:   { label: "โลก / แก้ไข / ป้องกัน", color: "#64748b" },
+    util:    { label: "เสริม / หลังบ้าน", color: "#c9860f" }
   },
 
   /* ---------- ปลั๊กอิน ---------- */
