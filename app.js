@@ -63,6 +63,18 @@
 
   const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+  /* ---------- PIN (สำหรับเปิดจากเครื่องอื่นใน LAN เช่น tablet) ---------- */
+  const getPin = () => localStorage.getItem("panelPin") || "";
+  const pinHeaders = () => (getPin() ? { "X-Pin": getPin() } : {});
+  let pinAsked = false;
+  function askPin() {
+    if (pinAsked) return false;
+    pinAsked = true;
+    const p = prompt("🔒 ใส่ PIN ของ Web Panel\n(ดูได้จากหน้าต่าง CMD ของเว็บบนคอม)");
+    if (p) { localStorage.setItem("panelPin", p.trim()); location.reload(); return true; }
+    return false;
+  }
+
   /* ไฮไลต์สี log ตามความสำคัญ — อ่านปราดเดียวรู้ว่าอะไรพัง อะไรผ่าน */
   function highlightLine(raw, type) {
     let cls = "lg";
@@ -112,7 +124,8 @@
 
   async function pollStatus() {
     try {
-      const r = await fetch("/api/status");
+      const r = await fetch("/api/status", { headers: pinHeaders() });
+      if (r.status === 401) { askPin(); panelOnline = false; setStatus(false, false); $("#statusPill").textContent = "🔒 ต้องใส่ PIN"; return; }
       const s = await r.json();
       panelOnline = true;
       setStatus(s.running, s.owned);
@@ -126,7 +139,8 @@
 
   async function api(path, body) {
     try {
-      const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+      const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", ...pinHeaders() }, body: body ? JSON.stringify(body) : undefined });
+      if (r.status === 401) { askPin(); return false; }
       const j = await r.json();
       if (!j.ok) toast("⚠ " + j.error);
       return j.ok;
@@ -163,9 +177,9 @@
     $("#quickCmds").innerHTML = `<span class="qlabel">คำสั่งด่วน:</span>` + quick.map(([c, l]) =>
       `<button class="qcmd" data-qcmd="${c}">${l} <code>/${c.split(" ")[0]}</code></button>`).join("");
 
-    // ต่อ log stream (SSE)
+    // ต่อ log stream (SSE) — EventSource ใส่ header ไม่ได้ เลยส่ง PIN ทาง query แทน
     try {
-      const es = new EventSource("/api/logs");
+      const es = new EventSource("/api/logs" + (getPin() ? "?pin=" + encodeURIComponent(getPin()) : ""));
       es.onmessage = (e) => {
         try { const m = JSON.parse(e.data); appendLog(m.line, m.type); } catch {}
       };
@@ -219,7 +233,11 @@
 
   async function openConfig() {
     let data;
-    try { data = await (await fetch("/api/config")).json(); } catch { data = null; }
+    try {
+      const r = await fetch("/api/config", { headers: pinHeaders() });
+      if (r.status === 401) { askPin(); return; }
+      data = await r.json();
+    } catch { data = null; }
     if (!data || !data.ok) { toast("⚠ อ่าน config ไม่ได้ — เปิดเว็บผ่าน start-web.bat ก่อน"); return; }
     cfgOriginal = data.config;
     const curated = new Set(CFG_GROUPS.flatMap(g => g.fields.map(f => f.key)));
@@ -262,7 +280,7 @@
       });
       if (!Object.keys(changes).length) { toast("ไม่มีค่าไหนเปลี่ยน"); return; }
       try {
-        const r = await (await fetch("/api/config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ changes }) })).json();
+        const r = await (await fetch("/api/config", { method: "POST", headers: { "Content-Type": "application/json", ...pinHeaders() }, body: JSON.stringify({ changes }) })).json();
         if (r.ok) { toast(`💾 บันทึกแล้ว ${r.applied.length} ค่า (${r.applied.join(", ")}) — มีผลตอนรีสตาร์ท`); closeConfig(); }
         else toast("⚠ " + r.error);
       } catch { toast("⚠ ต่อ backend ไม่ได้"); }

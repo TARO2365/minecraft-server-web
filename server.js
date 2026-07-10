@@ -24,6 +24,8 @@ const { spawn, execFile } = require("child_process");
 
 /* ---------- ตั้งค่า ---------- */
 const PORT = 8765;
+const HOST = "0.0.0.0";        // 0.0.0.0 = เปิดรับจากเครื่องอื่นในวง LAN/Wi-Fi (เช่น tablet) / เปลี่ยนกลับเป็น "127.0.0.1" ถ้าอยากล็อกเฉพาะเครื่องนี้
+const PANEL_PIN = "741205";    // PIN สำหรับเครื่องอื่นที่ไม่ใช่คอมเครื่องนี้ — แก้ได้ตามใจ / ตั้งเป็น "" = ปิดระบบ PIN
 const WEB_DIR = __dirname;
 const SERVER_DIR = "C:\\Users\\Taro\\OneDrive\\เดสก์ท็อป\\server new";
 const LOG_FILE = path.join(SERVER_DIR, "logs", "latest.log");
@@ -151,11 +153,22 @@ function json(res, code, obj) {
   res.end(JSON.stringify(obj));
 }
 
+/* เครื่องนี้เอง (localhost) ไม่ต้องใส่ PIN — เครื่องอื่นใน LAN ต้องใส่ */
+function authed(req, url) {
+  if (!PANEL_PIN) return true;
+  const ip = req.socket.remoteAddress || "";
+  if (ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1") return true;
+  return req.headers["x-pin"] === PANEL_PIN || url.searchParams.get("pin") === PANEL_PIN;
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
   const p = url.pathname;
 
-  /* --- API --- */
+  /* --- API (ทุกเส้นทางต้องผ่าน PIN ถ้ามาจากเครื่องอื่น) --- */
+  if (p.startsWith("/api/") && !authed(req, url)) {
+    return json(res, 401, { ok: false, error: "ต้องใส่ PIN (ดูค่า PANEL_PIN ในไฟล์ server.js หรือหน้าต่าง CMD ของเว็บ)" });
+  }
   if (p === "/api/status") {
     if (mcProcess) return json(res, 200, { running: true, owned: true, uptimeSec: Math.floor((Date.now() - mcStartedAt) / 1000) });
     return checkExternalJava((ext) => json(res, 200, { running: ext, owned: false, uptimeSec: null }));
@@ -230,9 +243,18 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, "127.0.0.1", () => {
+server.listen(PORT, HOST, () => {
   console.log("");
   console.log("  ✔ Web Panel พร้อมใช้:  http://localhost:" + PORT);
+  if (HOST === "0.0.0.0") {
+    const nets = require("os").networkInterfaces();
+    for (const name of Object.keys(nets)) {
+      for (const n of nets[name]) {
+        if (n.family === "IPv4" && !n.internal) console.log("  ✔ จากเครื่องอื่นใน LAN:  http://" + n.address + ":" + PORT + "  (" + name + ")");
+      }
+    }
+    console.log("  ✔ PIN สำหรับเครื่องอื่น: " + (PANEL_PIN || "(ปิดอยู่ — ไม่ต้องใส่)"));
+  }
   console.log("  ✔ โฟลเดอร์เซิร์ฟ:      " + SERVER_DIR);
   console.log("  (ปิดหน้าต่างนี้ = ปิดเว็บ panel — เซิร์ฟ Minecraft ไม่ดับตาม ถ้าเปิดจากข้างนอก)");
   console.log("");
