@@ -1,7 +1,7 @@
 /* ============================================================
    ข้อมูลเซิร์ฟเวอร์ + ปลั๊กอิน (ภาษาไทย)
    แก้ที่ไฟล์นี้ไฟล์เดียว — หน้าเว็บดึงไปแสดงอัตโนมัติ
-   ตรวจจากเซิฟจริง: 2026-07-08 (Paper 1.21.11 build 130 — หลังลบปลั๊กอินซ้ำ)
+   ตรวจจากเซิฟจริง: 2026-07-10 (Paper 1.21.11 build 130 — ลง CoreProtect + backup + RCON แล้ว)
 
    commands: [{ cmd, desc, must:true=คำสั่งที่ต้องรู้ }]
    integrations: [{ with, text }]
@@ -20,7 +20,7 @@ window.MC = {
     address: "localhost:25565",
     op: "Oxygenlave",
     github: "https://github.com/TARO2365/minecraft-server",
-    bootTime: "~38 วินาที (ตรวจ 2026-07-08)",
+    bootTime: "~35 วินาที (ตรวจ 2026-07-10)",
     note: "ดูแล/แก้ไขผ่าน Claude Code (ชัคกี้ CCO + subagent: researcher / docs-thai / installer / verifier)"
   },
 
@@ -480,6 +480,32 @@ window.MC = {
       ]
     },
     {
+      id: "coreprotect",
+      name: "CoreProtect",
+      version: "24.0 (Community Edition)",
+      cat: "world",
+      icon: "🕵️",
+      tagline: "log ย้อนหลังทุกบล็อก + rollback กู้ความเสียหาย",
+      what: "กล้องวงจรปิดของเซิฟ — บันทึกทุกการทุบ/วาง/เปิดกล่อง/หยิบของ ย้อนดูได้ว่าใครทำอะไรเมื่อไหร่ และ rollback คืนสภาพได้เป็นจุดๆ ติดตั้ง 2026-07-10 ใช้ SQLite เก็บข้อมูล — ต้องมีก่อนเปิดให้คนอื่นเข้า ไม่งั้นโดนกริฟแล้วกู้ไม่ได้",
+      features: [
+        "log ทุก action: ทุบ/วาง/เปิดกล่อง/ไฟไหม้/ระเบิด",
+        "จิ้มบล็อกดูประวัติย้อนหลังได้ (inspector mode)",
+        "rollback คืนสภาพเฉพาะคน/เวลา/รัศมีที่เลือก",
+        "restore ย้อนกลับ rollback ที่ทำพลาดได้"
+      ],
+      commands: [
+        { cmd: "/co inspect", desc: "เปิดโหมดจิ้มบล็อกดูประวัติ (ย่อ /co i)", must: true },
+        { cmd: "/co rollback u:<ชื่อ> t:2h r:30", desc: "ย้อนความเสียหายของคนนั้น 2 ชม. รัศมี 30", must: true },
+        { cmd: "/co lookup u:<ชื่อ> t:1d", desc: "ค้นประวัติผู้เล่นย้อนหลัง 1 วัน", must: false },
+        { cmd: "/co restore u:<ชื่อ> t:2h", desc: "ย้อนกลับ rollback ที่ทำไปแล้ว", must: false },
+        { cmd: "/co purge t:30d", desc: "[แอดมิน] ลบ log เก่ากว่า 30 วัน ลดขนาด DB", must: false }
+      ],
+      integrations: [
+        { with: "WorldGuard", text: "คู่หูความปลอดภัย — WorldGuard กันพื้นที่ไว้ก่อน / CoreProtect กู้ความเสียหายที่หลุดมา" },
+        { with: "ระบบ backup (Task Scheduler)", text: "backup กู้ทั้งโลก / CoreProtect กู้เฉพาะจุด — ใช้คู่กันครอบคลุมทุกเคส" }
+      ]
+    },
+    {
       id: "spark",
       name: "spark",
       version: "มากับ Paper (bundled)",
@@ -507,14 +533,6 @@ window.MC = {
   /* ---------- ปลั๊กอินที่ยังขาด (ตามแผนเฟสใน CLAUDE.md) ---------- */
   planned: [
     {
-      name: "CoreProtect",
-      phase: 1,
-      icon: "🕵️",
-      why: "log ทุกการทุบ/วาง/เปิดกล่อง + rollback ได้ — ของสำคัญที่สุดที่ยังขาด ต้องมีก่อนเปิดให้เพื่อนเข้า ไม่งั้นโดนกริฟแล้วกู้ไม่ได้ (เช็กแล้ว: v24.0 รองรับ 1.21.11 ✓ ไม่มี dependency โหลดจาก Modrinth)",
-      status: "พร้อมติดตั้งเลย (ฟรี)",
-      pairs: "ใช้คู่กับ WorldGuard: WorldGuard กันพื้นที่ / CoreProtect กู้ความเสียหายที่หลุดมา"
-    },
-    {
       name: "MMOItems + MythicLib",
       phase: 1,
       icon: "⚔️",
@@ -523,19 +541,11 @@ window.MC = {
       pairs: "⚠ ลงแล้วต้องปิด REAL blocks ใน config ItemsAdder กันบล็อกตีกัน (มีวิธีในวิกิ IA) / เกราะ skin ของ MMOItems ใช้กับเกราะ IA ไม่ได้ / เชื่อม MythicMobs ให้มอนดรอปไอเทม MMOItems"
     },
     {
-      name: "ระบบ backup อัตโนมัติ",
-      phase: 1,
-      icon: "💾",
-      why: "ตอนนี้มีแค่ git (เก็บ config ไม่เก็บโลก) — ต้องมี backup โลกอัตโนมัติก่อนเปิดจริง จะใช้ plugin หรือ task scheduler ของ Windows ก็ได้",
-      status: "รอเลือกวิธี",
-      pairs: "ทำงานร่วมกับ CoreProtect: backup กู้ทั้งโลก / CoreProtect กู้เฉพาะจุด"
-    },
-    {
       name: "MMOCore",
       phase: 2,
       icon: "🧙",
-      why: "ระบบอาชีพ/คลาส (รวม Gunslinger ตามแผน) + เลเวลผู้เล่น ค่ายเดียวกับ MMOItems ทำงานเข้ากันดี (€19.99 — เช็กความเข้ากับ 1.21.11 พร้อม MMOItems ทีเดียว)",
-      status: "รอเฟส 2 (€19.99)",
+      why: "ระบบอาชีพ/คลาส (รวม Gunslinger ตามแผน) + เลเวลผู้เล่น ค่ายเดียวกับ MMOItems (€19.99) — ตัวแทนฟรีที่ researcher แนะนำ: Fabled (อดีต ProSkillAPI, open source, คลาส/สกิล/web editor ครบ) ⚠ เลเวลจะซ้อนกับ AuraSkills ต้องเลือกเจ้าภาพให้ชัด",
+      status: "รอเฟส 2 (€19.99 หรือ Fabled ฟรี)",
       pairs: "MMOItems กำหนด requirement อาชีพ/เลเวลบนไอเทมได้"
     },
     {
@@ -550,8 +560,8 @@ window.MC = {
       name: "ModelEngine",
       phase: 2,
       icon: "🦖",
-      why: "โมเดลมอน 3D ซับซ้อน (บอสลูนาเรกซ์ กระต่ายยักษ์) — MythicMobs เรียกใช้โมเดลได้ตรง (เช็กแล้ว: R4.0.9 รองรับ 1.19.4–1.21.11 ✓ ราคา $39.99 บน MythicCraft)",
-      status: "รอเฟส 2 ($39.99)",
+      why: "โมเดลมอน 3D ซับซ้อน (บอสลูนาเรกซ์ กระต่ายยักษ์) — MythicMobs เรียกใช้โมเดลได้ตรง ($39.99) — ตัวแทนฟรีที่ researcher แนะนำ: BetterModel (open source ทำมาแทน MEG ตรงๆ ใช้กับ MythicMobs/Citizens ได้ ต้อง 1.21.4+ ควรเทสก่อน)",
+      status: "รอเฟส 2 ($39.99 หรือ BetterModel ฟรี)",
       pairs: "MythicMobs + ModelEngine = บอสมีท่าทาง/animation จริง"
     },
     {
@@ -574,8 +584,8 @@ window.MC = {
       name: "Crates + AuctionHouse + Tebex + VotingPlugin",
       phase: 3,
       icon: "🎁",
-      why: "ชุด retention + monetization: กล่องสุ่ม, ตลาดประมูล, ร้านเติมเงิน, โหวตรับรางวัล",
-      status: "รอเฟส 3",
+      why: "ชุด retention + monetization: กล่องสุ่ม, ตลาดประมูล, ร้านเติมเงิน, โหวตรับรางวัล — ตัวฟรีที่ researcher ยืนยันแล้ว: CrazyCrates (รองรับ 1.21.11 ✓), ModernHDV (ประมูล รองรับ 1.21.11 ✓)",
+      status: "รอเฟส 3 (มีตัวฟรีครบ)",
       pairs: "รางวัลทั้งหมดวิ่งผ่าน Vault + ItemsAdder cosmetic ไม่ขายพลัง (ตามหลัก ไม่ pay-to-win)"
     }
   ],
