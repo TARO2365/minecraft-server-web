@@ -28,6 +28,9 @@ const WEB_DIR = __dirname;
 const SERVER_DIR = "C:\\Users\\Taro\\OneDrive\\เดสก์ท็อป\\server new";
 const LOG_FILE = path.join(SERVER_DIR, "logs", "latest.log");
 const START_BAT = path.join(SERVER_DIR, "start.bat");
+const SERVER_PROPS = path.join(SERVER_DIR, "server.properties");
+/* ค่าลับ — ห้ามส่งขึ้นหน้าเว็บและห้ามแก้ผ่านเว็บ */
+const SECRET_KEYS = ["rcon.password", "management-server-secret", "management-server-tls-keystore-password"];
 
 /* ---------- สถานะ ---------- */
 let mcProcess = null;      // process ที่เว็บเป็นคนเปิด (ควบคุมได้เต็มที่)
@@ -169,6 +172,43 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
+  /* --- ตั้งค่าเซิร์ฟ (server.properties) --- */
+  if (p === "/api/config" && req.method === "GET") {
+    try {
+      const txt = fs.readFileSync(SERVER_PROPS, "utf8");
+      const config = {};
+      for (const line of txt.split(/\r?\n/)) {
+        const m = line.match(/^([A-Za-z0-9._-]+)=(.*)$/);
+        if (m && !SECRET_KEYS.includes(m[1])) config[m[1]] = m[2];
+      }
+      return json(res, 200, { ok: true, config });
+    } catch (e) { return json(res, 500, { ok: false, error: "อ่าน server.properties ไม่ได้: " + e.message }); }
+  }
+  if (p === "/api/config" && req.method === "POST") {
+    let body = "";
+    req.on("data", (d) => (body += d));
+    req.on("end", () => {
+      let changes = {};
+      try { changes = JSON.parse(body).changes || {}; } catch (e) {}
+      try {
+        let txt = fs.readFileSync(SERVER_PROPS, "utf8");
+        const applied = [];
+        for (const [k, v] of Object.entries(changes)) {
+          if (SECRET_KEYS.includes(k)) continue;                      // ค่าลับ แก้ผ่านเว็บไม่ได้
+          const val = String(v).replace(/[\r\n]/g, "");               // กันยัดหลายบรรทัด
+          const re = new RegExp("^" + k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "=.*$", "m");
+          if (re.test(txt)) { txt = txt.replace(re, () => k + "=" + val); applied.push(k); }
+        }
+        if (applied.length) {
+          fs.writeFileSync(SERVER_PROPS, txt);
+          pushSystem("⚙ แก้ config: " + applied.join(", ") + " — มีผลตอนรีสตาร์ทเซิร์ฟ");
+        }
+        json(res, 200, { ok: true, applied });
+      } catch (e) { json(res, 500, { ok: false, error: "เขียนไฟล์ไม่ได้: " + e.message }); }
+    });
+    return;
+  }
+
   if (p === "/api/logs") {
     res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
     res.write(":ok\n\n");

@@ -153,6 +153,8 @@
       if (!cmd) return;
       if (await api("/api/command", { cmd })) inp.value = "";
     });
+    // ปุ่มตั้งค่าเซิร์ฟ
+    $("#btnConfig").addEventListener("click", openConfig);
     // ปุ่มคำสั่งด่วน
     const quick = [
       ["list", "ใครออนบ้าง"], ["say สวัสดีชาวเซิฟ!", "ประกาศ"], ["spark tps", "เช็ก TPS"],
@@ -179,6 +181,96 @@
       appendLog("1) ดับเบิลคลิก start-web.bat ในโฟลเดอร์ minecraft-server-web", "system");
       appendLog("2) เปิด http://localhost:8765", "system");
     }
+  }
+
+  /* ==========================================================
+     ตั้งค่าเซิร์ฟ — แก้ server.properties จากหน้าเว็บ
+     (มีผลตอนรีสตาร์ทเซิร์ฟ / ค่าลับอย่างรหัส RCON ไม่โผล่ที่นี่)
+     ========================================================== */
+  const CFG_GROUPS = [
+    { title: "🏷 ทั่วไป", fields: [
+      { key: "motd", label: "ข้อความเซิร์ฟ (MOTD)", type: "text", hint: "โชว์ในหน้ารายชื่อเซิร์ฟของผู้เล่น" },
+      { key: "max-players", label: "ผู้เล่นสูงสุด", type: "number" },
+      { key: "difficulty", label: "ความยาก", type: "select", options: ["peaceful", "easy", "normal", "hard"] },
+      { key: "gamemode", label: "โหมดเริ่มต้น", type: "select", options: ["survival", "creative", "adventure", "spectator"] },
+      { key: "force-gamemode", label: "บังคับโหมดทุกครั้งที่เข้า", type: "bool" }
+    ]},
+    { title: "🌐 เครือข่าย / IP", fields: [
+      { key: "server-ip", label: "IP ที่เปิดรับ (bind)", type: "text", hint: "ปกติเว้นว่าง = รับทุก IP ของเครื่อง" },
+      { key: "server-port", label: "พอร์ต", type: "number", hint: "ค่ามาตรฐาน 25565" },
+      { key: "online-mode", label: "เช็ก Minecraft แท้", type: "bool", hint: "false = เปิดให้เครื่องเถื่อน (ต้องลง AuthMe ก่อน!)" },
+      { key: "enable-status", label: "โชว์สถานะในหน้า multiplayer", type: "bool" },
+      { key: "hide-online-players", label: "ซ่อนรายชื่อคนออนไลน์", type: "bool" }
+    ]},
+    { title: "👥 ผู้เล่น / Whitelist", fields: [
+      { key: "white-list", label: "เปิดระบบ whitelist", type: "bool", hint: "เปิดแล้วต้อง /whitelist add ก่อนถึงเข้าได้" },
+      { key: "enforce-whitelist", label: "เตะคนนอก whitelist ทันที", type: "bool" },
+      { key: "player-idle-timeout", label: "เตะคน AFK (นาที)", type: "number", hint: "0 = ไม่เตะ" },
+      { key: "allow-flight", label: "อนุญาตการบิน", type: "bool", hint: "ควรเปิดถ้าใช้ IslandFly กันโดนเตะผิดๆ" },
+      { key: "spawn-protection", label: "รัศมีกันแก้ไขรอบ spawn (บล็อก)", type: "number" }
+    ]},
+    { title: "⚡ ประสิทธิภาพ", fields: [
+      { key: "view-distance", label: "ระยะมองเห็น (chunk)", type: "number", hint: "RAM 4GB แนะนำ 8-10" },
+      { key: "simulation-distance", label: "ระยะประมวลผล (chunk)", type: "number", hint: "ต่ำกว่า view-distance ได้ ช่วยลดแลค" },
+      { key: "pause-when-empty-seconds", label: "พักเซิร์ฟเมื่อไม่มีคน (วินาที)", type: "number", hint: "-1 = ไม่พัก" }
+    ]}
+  ];
+  let cfgOriginal = {};
+
+  async function openConfig() {
+    let data;
+    try { data = await (await fetch("/api/config")).json(); } catch { data = null; }
+    if (!data || !data.ok) { toast("⚠ อ่าน config ไม่ได้ — เปิดเว็บผ่าน start-web.bat ก่อน"); return; }
+    cfgOriginal = data.config;
+    const curated = new Set(CFG_GROUPS.flatMap(g => g.fields.map(f => f.key)));
+
+    const field = (f) => {
+      const v = cfgOriginal[f.key];
+      if (v === undefined) return "";   // key ไม่มีในไฟล์ — ไม่โชว์
+      let input;
+      if (f.type === "bool") input = `<select data-cfg="${f.key}"><option value="true"${v === "true" ? " selected" : ""}>เปิด (true)</option><option value="false"${v === "false" ? " selected" : ""}>ปิด (false)</option></select>`;
+      else if (f.type === "select") input = `<select data-cfg="${f.key}">${f.options.map(o => `<option${o === v ? " selected" : ""}>${o}</option>`).join("")}</select>`;
+      else input = `<input type="${f.type}" data-cfg="${f.key}" value="${esc(v)}">`;
+      return `<div class="cfg-row"><label>${f.label}<small>${f.key}${f.hint ? " — " + f.hint : ""}</small></label>${input}</div>`;
+    };
+
+    const advanced = Object.keys(cfgOriginal).filter(k => !curated.has(k)).sort().map(k =>
+      `<div class="cfg-row"><label>${k}</label><input type="text" data-cfg="${k}" value="${esc(cfgOriginal[k])}"></div>`).join("");
+
+    $("#cfgModal").innerHTML = `
+      <div class="modal-head">
+        <div class="ico">⚙</div>
+        <div><h2>ตั้งค่าเซิร์ฟเวอร์</h2><div class="ver">server.properties — บันทึกแล้วมีผลตอนรีสตาร์ทเซิร์ฟ</div></div>
+        <button class="close-btn" data-cfgclose>×</button>
+      </div>
+      <div class="modal-body">
+        ${CFG_GROUPS.map(g => `<div class="cfg-group"><div class="cfg-title">${g.title}</div>${g.fields.map(field).join("")}</div>`).join("")}
+        <details class="cfg-adv"><summary>🔧 ค่าอื่นๆ ทั้งหมด (ขั้นสูง — แก้เฉพาะที่รู้ว่าทำอะไร)</summary>${advanced}</details>
+        <div class="cfg-actions">
+          <span class="cfg-note">💾 เฉพาะค่าที่เปลี่ยนเท่านั้นที่ถูกบันทึก</span>
+          <button class="pbtn run" id="cfgSave">บันทึก</button>
+        </div>
+      </div>`;
+    $("#cfgOverlay").classList.add("show");
+    document.body.style.overflow = "hidden";
+
+    $("#cfgSave").addEventListener("click", async () => {
+      const changes = {};
+      document.querySelectorAll("[data-cfg]").forEach(el => {
+        const k = el.dataset.cfg;
+        if (el.value !== cfgOriginal[k]) changes[k] = el.value;
+      });
+      if (!Object.keys(changes).length) { toast("ไม่มีค่าไหนเปลี่ยน"); return; }
+      try {
+        const r = await (await fetch("/api/config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ changes }) })).json();
+        if (r.ok) { toast(`💾 บันทึกแล้ว ${r.applied.length} ค่า (${r.applied.join(", ")}) — มีผลตอนรีสตาร์ท`); closeConfig(); }
+        else toast("⚠ " + r.error);
+      } catch { toast("⚠ ต่อ backend ไม่ได้"); }
+    });
+  }
+  function closeConfig() {
+    $("#cfgOverlay").classList.remove("show");
+    document.body.style.overflow = "";
   }
 
   /* ---------- ปลั๊กอินที่ยังขาด ---------- */
@@ -341,8 +433,9 @@
       renderGrid(); return;
     }
     if (e.target.closest("[data-close]") || e.target.id === "overlay") closeModal();
+    if (e.target.closest("[data-cfgclose]") || e.target.id === "cfgOverlay") closeConfig();
   });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeModal(); closeConfig(); } });
 
   $("#footer").innerHTML = `รวบรวมจากเซิฟจริง • แก้ข้อมูลที่ <b>data.js</b> ไฟล์เดียว • ดูแลโดย Claude Code`;
 

@@ -20,6 +20,7 @@
         <div class="panel-btns">
           <button id="btnStart" class="pbtn run" disabled>▶ Run เซิร์ฟ</button>
           <button id="btnStop" class="pbtn stop" disabled>⏹ Stop</button>
+          <button id="btnConfig" class="pbtn cfg">⚙ ตั้งค่าเซิร์ฟ</button>
         </div>
       </div>
       <div class="console">
@@ -57,6 +58,11 @@
   <!-- modal ดีเทลปลั๊กอิน -->
   <div class="overlay" id="overlay">
     <div class="modal" id="modal"></div>
+  </div>
+
+  <!-- modal ตั้งค่าเซิร์ฟ (server.properties) -->
+  <div class="overlay" id="cfgOverlay">
+    <div class="modal" id="cfgModal"></div>
   </div>
 
   <script src="data.js"></script>
