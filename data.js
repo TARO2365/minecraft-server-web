@@ -590,6 +590,203 @@ window.MC = {
     }
   ],
 
+  /* ---------- คู่มือการใช้งาน (guide.html) ----------
+     where: "console" = พิมพ์ในช่องคำสั่งของเว็บ panel ได้เลย (ไม่ต้องเข้าเกม)
+            "game"    = ต้องยืนอยู่ในเกม
+            "file"    = แก้ไฟล์ config (บอกชัคกี้ทำให้ได้)
+            "web"     = กดในเว็บ panel ---------- */
+  guides: [
+    /* ===== หมวด: เซิร์ฟเวอร์ / หลังบ้าน ===== */
+    {
+      id: "g-run", cat: "ops", icon: "🔌", title: "เปิด-ปิดเซิร์ฟอย่างถูกวิธี",
+      who: "🖥 ทำจากเว็บได้ทั้งหมด",
+      steps: [
+        { t: "เปิดเว็บ panel: ดับเบิลคลิก start-web.bat (เบราว์เซอร์เด้งเอง)", where: "web" },
+        { t: "กดปุ่ม ▶ Run เซิร์ฟ — รอ ~35 วิ จนขึ้น Done สีเขียวในจอ CMD", where: "web" },
+        { t: "ปิดเซิร์ฟ: กด ⏹ Stop (ระบบจะเซฟโลกก่อนปิดเสมอ)", where: "web" },
+        { t: "ถ้าเปิดเซิร์ฟจากหน้าต่าง CMD เอง ให้พิมพ์ stop ในหน้าต่างนั้น", where: "game" }
+      ],
+      tip: "ห้ามกดปิดหน้าต่าง java/กด X เด็ดขาด — โลกจะไม่ถูกเซฟ เสี่ยงไฟล์พัง"
+    },
+    {
+      id: "g-tablet", cat: "ops", icon: "📱", title: "เปิดเว็บจาก tablet / มือถือ",
+      who: "🖥 ครั้งแรกครั้งเดียว",
+      steps: [
+        { t: "ต่อ tablet เข้า Wi-Fi วงเดียวกับคอม", where: "web" },
+        { t: "เปิดเบราว์เซอร์ไป http://192.168.1.111:8765", where: "web" },
+        { t: "กดปุ่มอะไรก็ได้ครั้งแรก → ใส่ PIN (ดูในหน้าต่าง CMD ของเว็บ) — ใส่ครั้งเดียวจำถาวร", where: "web" }
+      ],
+      tip: "ถ้าเข้าไม่ได้ = ไฟร์วอลล์ยังไม่เปิด — รันคำสั่ง New-NetFirewallRule ใน PowerShell (Admin) ตามที่ชัคกี้เคยให้ไว้"
+    },
+    {
+      id: "g-backup", cat: "ops", icon: "💾", title: "Backup & กู้ข้อมูล",
+      who: "🖥 อัตโนมัติอยู่แล้ว",
+      steps: [
+        { t: "ระบบสำรองเองทุกวันตี 4 → C:\\mc-backups (เก็บ 7 ชุดล่าสุด)", where: "web" },
+        { t: "สั่งสำรองเดี๋ยวนี้: ดับเบิลคลิก backup-server.ps1 ในโฟลเดอร์เซิร์ฟ", where: "web" },
+        { t: "กู้ทั้งเซิร์ฟ: ปิดเซิร์ฟ → แตก zip ชุดล่าสุดทับโฟลเดอร์เซิร์ฟ → เปิดใหม่", where: "web" },
+        { t: "กู้เฉพาะจุด (โดนกริฟ/พังนิดเดียว): ใช้ CoreProtect ดีกว่า — ดูสูตร 'เช็คใครพัง+กู้คืน'", where: "console" }
+      ],
+      tip: "ก่อนลงปลั๊กอินใหม่หรือแก้อะไรใหญ่ๆ สั่ง backup เองก่อนรอบนึงเสมอ"
+    },
+    {
+      id: "g-config", cat: "ops", icon: "⚙", title: "ตั้งค่าเซิร์ฟ (MOTD / ผู้เล่นสูงสุด / IP)",
+      who: "🖥 กดในเว็บ",
+      steps: [
+        { t: "กดปุ่ม ⚙ ตั้งค่าเซิร์ฟ ข้างปุ่ม Run/Stop", where: "web" },
+        { t: "แก้ค่าที่ต้องการ (ทุกช่องมีคำอธิบายไทย) แล้วกดบันทึก", where: "web" },
+        { t: "รีสตาร์ทเซิร์ฟ 1 รอบ ค่าใหม่ถึงจะมีผล", where: "web" }
+      ],
+      tip: "ค่าแนะนำ RAM 4GB: view-distance 8-10, simulation-distance 6-8 / อย่าแตะ online-mode ถ้าไม่มี AuthMe"
+    },
+    {
+      id: "g-debug", cat: "ops", icon: "🩺", title: "เซิร์ฟแลค/มีปัญหา — เช็คยังไง",
+      who: "🖥 ทำจากเว็บได้ทั้งหมด",
+      steps: [
+        { t: "ดูจอ CMD ในเว็บ — บรรทัดสีแดง = ERROR, เหลือง = WARN", where: "web" },
+        { t: "เช็คความลื่น (ควรใกล้ 20):", cmd: "spark tps", where: "console" },
+        { t: "หาตัวการแลค (รอ 1-2 นาทีจะได้ลิงก์รายงาน):", cmd: "spark profiler start --timeout 120", where: "console" },
+        { t: "เซิร์ฟค้างหนัก: ดู log ล่าสุดในโฟลเดอร์ logs/ หรือเรียกชัคกี้วิเคราะห์", where: "web" }
+      ],
+      tip: "อาการแลคส่วนใหญ่ของเซิร์ฟเล็ก: view-distance สูงไป หรือมอบ/ไอเทมตกค้างเยอะ"
+    },
+
+    /* ===== หมวด: เซ็ตครั้งแรก ===== */
+    {
+      id: "g-rank", cat: "setup", icon: "🔑", title: "สร้างยศ + สีชื่อ (LuckPerms)",
+      who: "🖥 พิมพ์จากเว็บได้เลย",
+      steps: [
+        { t: "ตั้งป้ายให้ผู้เล่นทั่วไป (กลุ่ม default มีอยู่แล้ว):", cmd: "lp group default meta setprefix \"&7[ผู้เล่น] &f\"", where: "console" },
+        { t: "สร้างยศแอดมิน:", cmd: "lp creategroup admin", where: "console" },
+        { t: "ป้ายสีแดงให้แอดมิน:", cmd: "lp group admin meta setprefix \"&c[แอดมิน] &f\"", where: "console" },
+        { t: "ให้สิทธิ์ทุกอย่างกับแอดมิน:", cmd: "lp group admin permission set * true", where: "console" },
+        { t: "ตั้งตัวเองเป็นแอดมิน:", cmd: "lp user Oxygenlave parent set admin", where: "console" },
+        { t: "แก้ละเอียดผ่านหน้าเว็บของ LuckPerms:", cmd: "lp editor", where: "console" }
+      ],
+      tip: "สี: &7 เทา &c แดง &6 ทอง &b ฟ้า &a เขียว — ป้ายจะโชว์ในแชท/tablist อัตโนมัติ"
+    },
+    {
+      id: "g-spawn", cat: "setup", icon: "🏠", title: "ตั้งจุดเกิด + กันพื้นที่ spawn",
+      who: "🖥 เกือบหมด / 🎮 5 นาที",
+      steps: [
+        { t: "ตั้งจุดเกิดของโลกจาก console (ใส่พิกัด x y z):", cmd: "setworldspawn 0 100 0", where: "console" },
+        { t: "จุดเกิดแบบแม่นตำแหน่ง+มุมมอง: เข้าเกมไปยืนจุดที่ต้องการแล้วพิมพ์ /setspawn", where: "game" },
+        { t: "กันพื้นที่รอบ spawn แบบง่าย: ปุ่ม ⚙ ในเว็บ → spawn-protection = รัศมีที่ต้องการ (บล็อก)", where: "web" },
+        { t: "กันแบบละเอียด (เขต WorldGuard): เข้าเกม //wand เลือกมุม 2 จุด แล้ว /rg define spawn_city", where: "game" },
+        { t: "ตั้งกฎเขต เช่นห้าม PvP:", cmd: "rg flag spawn_city pvp deny", where: "console" }
+      ],
+      tip: "spawn-protection กันได้เฉพาะ non-OP / เขต WorldGuard ละเอียดกว่า ค่อยทำตอนมีแมพจริง"
+    },
+    {
+      id: "g-kit", cat: "setup", icon: "🎒", title: "คิทของแจกผู้เล่นใหม่",
+      who: "🖥 บอกชัคกี้จัดให้",
+      steps: [
+        { t: "คิทอยู่ในไฟล์ plugins/Essentials/kits.yml — บอกชัคกี้ว่าอยากแจกอะไร (เช่น ดาบหิน ขนมปัง 16) เดี๋ยวเขียนให้", where: "file" },
+        { t: "โหลด config ใหม่หลังแก้:", cmd: "essentials reload", where: "console" },
+        { t: "ผู้เล่นรับของ: /kit เริ่มต้น", where: "game" }
+      ],
+      tip: "ตั้ง delay ได้ เช่นรับได้ครั้งเดียว หรือทุก 24 ชม. — กันฟาร์มของแจก"
+    },
+    {
+      id: "g-shop", cat: "setup", icon: "🛒", title: "ปรับราคาร้านค้ากลาง",
+      who: "🖥 บอกชัคกี้จัดให้",
+      steps: [
+        { t: "ราคาอยู่ใน plugins/EconomyShopGUI/shops/ — บอกชัคกี้ว่าหมวดไหนซื้อ/ขายเท่าไหร่ เดี๋ยวแก้ให้ทั้งชุด", where: "file" },
+        { t: "ตั้งราคาทีละชิ้นในเกมก็ได้: ถือของแล้วพิมพ์", cmd: "esg setprice", where: "game" },
+        { t: "โหลดร้านใหม่:", cmd: "esg reload", where: "console" }
+      ],
+      tip: "หลักตั้งราคา: ราคาขายให้ผู้เล่น ควรเป็น ~4 เท่าของราคารับซื้อ กันปั๊มเงินวน"
+    },
+    {
+      id: "g-tab", cat: "setup", icon: "📑", title: "แต่ง tablist / scoreboard",
+      who: "🖥 บอกชัคกี้จัดให้",
+      steps: [
+        { t: "config อยู่ที่ plugins/TAB/config.yml — บอกธีมที่อยากได้ (ชื่อเซิร์ฟ สี ข้อมูลที่โชว์) ชัคกี้เขียนให้", where: "file" },
+        { t: "โหลดใหม่:", cmd: "tab reload", where: "console" }
+      ],
+      tip: "โชว์เงิน+เลเวลเกาะบน scoreboard ได้ผ่าน PlaceholderAPI เช่น %vault_eco_balance_formatted%"
+    },
+    {
+      id: "g-whitelist", cat: "setup", icon: "🎟", title: "เปิด whitelist ให้เฉพาะเพื่อนเข้า",
+      who: "🖥 พิมพ์จากเว็บได้เลย",
+      steps: [
+        { t: "เปิดระบบ:", cmd: "whitelist on", where: "console" },
+        { t: "เพิ่มเพื่อนทีละคน:", cmd: "whitelist add ชื่อเพื่อน", where: "console" },
+        { t: "ดูรายชื่อ:", cmd: "whitelist list", where: "console" },
+        { t: "หรือเปิดผ่านปุ่ม ⚙ ตั้งค่า → white-list = เปิด", where: "web" }
+      ],
+      tip: "เปิดไว้ตลอดช่วงพัฒนา — กันคนแปลกหน้าเข้ามาป่วนก่อนเซิร์ฟพร้อม"
+    },
+
+    /* ===== หมวด: ใช้ประจำ ===== */
+    {
+      id: "g-grief", cat: "daily", icon: "🕵️", title: "เช็คใครพัง/ขโมยของ + กู้คืน (CoreProtect)",
+      who: "🖥 เช็คจากเว็บได้ / 🎮 กู้แม่นๆ ในเกม",
+      steps: [
+        { t: "ดูว่าใครทำอะไรแถวไหน (จาก console):", cmd: "co lookup u:ชื่อ t:1d", where: "console" },
+        { t: "ในเกม: พิมพ์ /co i แล้วจิ้มบล็อก = เห็นประวัติทั้งหมดของจุดนั้น", where: "game" },
+        { t: "กู้ความเสียหายของคนนั้นย้อนหลัง 2 ชม. รัศมี 30:", cmd: "co rollback u:ชื่อ t:2h r:30", where: "console" },
+        { t: "กู้พลาด? ย้อนกลับได้:", cmd: "co restore u:ชื่อ t:2h r:30", where: "console" }
+      ],
+      tip: "u: ชื่อคน / t: เวลา (1h 2d) / r: รัศมีบล็อก — ผสมกันได้"
+    },
+    {
+      id: "g-mob", cat: "daily", icon: "🐉", title: "สร้างมอนคัสตอม (MythicMobs)",
+      who: "🖥 ชัคกี้เขียน config ให้ / 🎮 เทสในเกม",
+      steps: [
+        { t: "มอนเป็นไฟล์ .yml ใน plugins/MythicMobs/Mobs/ — บอกสเปกชัคกี้ (ชื่อ HP ดาเมจ สกิล ดรอป) เดี๋ยวเขียนให้", where: "file" },
+        { t: "โหลด config ใหม่:", cmd: "mm reload", where: "console" },
+        { t: "เสกมาดูหน้าตา (ต้องอยู่ในเกม):", cmd: "mm mobs spawn ชื่อมอน 1", where: "game" },
+        { t: "ดูรายชื่อมอนทั้งหมด:", cmd: "mm mobs list", where: "console" }
+      ],
+      tip: "มอน 5 ตัวของโซนมิดกาเรีย (พูริ→ลูนาเรกซ์) ออกแบบเสร็จแล้วในแผน — อนุมัติเมื่อไหร่ชัคกี้เขียนให้ทันที"
+    },
+    {
+      id: "g-npc", cat: "daily", icon: "🧍", title: "สร้าง NPC ในเมือง (Citizens)",
+      who: "🎮 ต้องเข้าเกม (กำหนดตำแหน่งยืน)",
+      steps: [
+        { t: "ยืนจุดที่อยากให้ NPC อยู่ แล้วพิมพ์ /npc create ลุงตีเหล็ก", where: "game" },
+        { t: "เปลี่ยนสกิน: /npc skin ชื่อผู้เล่นที่สกินสวย", where: "game" },
+        { t: "ให้คลิกแล้วทำอะไรสักอย่าง เช่นเปิดร้าน: /npc command add server shop", where: "game" },
+        { t: "ลบตัวที่เลือกอยู่: /npc remove", where: "game" }
+      ],
+      tip: "NPC ต้องเข้าเกมเพราะผูกกับตำแหน่งยืน — เตรียมสคริปต์คำสั่งไว้ก่อนแล้วเข้าไปวางทีเดียว 10 นาทีเสร็จหลายตัว"
+    },
+    {
+      id: "g-holo", cat: "daily", icon: "💬", title: "ป้ายลอยกลางอากาศ (DecentHolograms)",
+      who: "🎮 ต้องเข้าเกม (กำหนดตำแหน่ง)",
+      steps: [
+        { t: "ยืนจุดที่อยากให้ป้ายลอย: /dh create welcome ยินดีต้อนรับ!", where: "game" },
+        { t: "เพิ่มบรรทัด: /dh line add welcome 'บรรทัดใหม่'", where: "game" },
+        { t: "ป้ายค่าสด เช่นคนออนไลน์: ใส่ %server_online% ในข้อความได้เลย", where: "game" },
+        { t: "แก้/ลบ:", cmd: "dh list", where: "console" }
+      ],
+      tip: "ป้ายอันดับเกาะ Top 10 ทำได้ด้วย placeholder ของ BentoBox Level — บอกชัคกี้ช่วยประกอบสูตรได้"
+    },
+    {
+      id: "g-island", cat: "daily", icon: "🧱", title: "จัดการเกาะ OneBlock (แอดมิน)",
+      who: "🖥 ส่วนใหญ่จาก console ได้",
+      steps: [
+        { t: "ดูข้อมูลเกาะของผู้เล่น:", cmd: "oba info ชื่อผู้เล่น", where: "console" },
+        { t: "ดู/แก้เฟสบล็อกของเกาะ:", cmd: "oba count ชื่อผู้เล่น", where: "console" },
+        { t: "รีเซ็ตเกาะให้ผู้เล่น (ระวัง! ของหาย):", cmd: "oba reset ชื่อผู้เล่น", where: "console" },
+        { t: "ผู้เล่นใช้เอง: /ob (สร้าง/กลับเกาะ), /ob level, /is challenges", where: "game" }
+      ],
+      tip: "คำสั่งแอดมินขึ้นต้น oba / ของผู้เล่นขึ้นต้น ob — จำง่ายๆ a = admin"
+    },
+    {
+      id: "g-announce", cat: "daily", icon: "📢", title: "ประกาศ / คุยกับคนในเซิร์ฟ",
+      who: "🖥 พิมพ์จากเว็บได้เลย",
+      steps: [
+        { t: "ประกาศทั้งเซิร์ฟ:", cmd: "say เซิร์ฟจะรีสตาร์ทใน 5 นาที!", where: "console" },
+        { t: "ใครออนอยู่บ้าง:", cmd: "list", where: "console" },
+        { t: "กระซิบหาคนเดียว:", cmd: "msg ชื่อ ข้อความ", where: "console" },
+        { t: "เตะ/แบนคนป่วน:", cmd: "kick ชื่อ เหตุผล", where: "console" }
+      ],
+      tip: "ปุ่มคำสั่งด่วนใต้จอ CMD ในเว็บ มีคำสั่งพวกนี้ให้กดเลยไม่ต้องพิมพ์"
+    }
+  ],
+
   /* ---------- ตัวอย่างวงจรการเชื่อมปลั๊กอิน (เห็นภาพจริง) ---------- */
   flows: [
     {

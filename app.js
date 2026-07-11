@@ -50,6 +50,7 @@
         <span class="chip"><b>บูต:</b> ${s.bootTime}</span>
         <span class="chip"><b>GitHub:</b> <a href="${s.github}" target="_blank">repo</a></span>
         <span class="chip"><b>📘 แผนเซิร์ฟ:</b> <a href="plan.html">เปิดดู interactive</a></span>
+        <span class="chip"><b>📖 คู่มือ:</b> <a href="guide.html">วิธีใช้เซิร์ฟ+ปลั๊กอิน</a></span>
       </div>`;
   }
 

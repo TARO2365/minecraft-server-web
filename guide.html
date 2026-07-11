@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>คู่มือใช้งานเซิร์ฟ — OneBlock RPG</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="hero">
+      <h1>📖 คู่มือใช้งานเซิร์ฟ + ปลั๊กอิน</h1>
+      <div class="sub">สูตรสำเร็จทีละขั้น — ป้ายบอกชัดว่าอันไหนสั่งจากเว็บได้เลย อันไหนต้องเข้าเกม</div>
+      <div class="meta">
+        <span class="chip"><b>⌂</b> <a href="index.html">กลับ Web Panel</a></span>
+        <span class="chip"><b>📘</b> <a href="plan.html">แผนเซิร์ฟ interactive</a></span>
+        <span class="chip legend"><b>🖥 console</b> = พิมพ์ในช่องคำสั่งของเว็บ</span>
+        <span class="chip legend"><b>🎮 ในเกม</b> = ต้องเข้าเกมจริง</span>
+        <span class="chip legend"><b>📝 ไฟล์</b> = บอกชัคกี้จัดให้</span>
+      </div>
+    </header>
+
+    <div class="filters" id="gfilters">
+      <button class="fbtn active" data-gcat="all">ทั้งหมด</button>
+      <button class="fbtn" data-gcat="ops">🔌 เซิร์ฟเวอร์/หลังบ้าน</button>
+      <button class="fbtn" data-gcat="setup">🧰 เซ็ตครั้งแรก</button>
+      <button class="fbtn" data-gcat="daily">📅 ใช้ประจำ</button>
+    </div>
+
+    <div id="glist"></div>
+
+    <footer>คู่มือทั้งหมดแก้ที่ <b>data.js</b> (ส่วน guides) • อยากได้สูตรเพิ่ม บอกชัคกี้ได้เลย</footer>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+  (() => {
+    const D = window.MC;
+    const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const WHERE = {
+      console: { label: "🖥 console", cls: "wb-console", hint: "พิมพ์ในช่องคำสั่งของเว็บ panel ได้เลย" },
+      game:    { label: "🎮 ในเกม", cls: "wb-game", hint: "ต้องอยู่ในเกม" },
+      file:    { label: "📝 ไฟล์", cls: "wb-file", hint: "แก้ไฟล์ config — บอกชัคกี้ทำให้ได้" },
+      web:     { label: "🌐 เว็บ", cls: "wb-web", hint: "กดในหน้าเว็บ panel" }
+    };
+
+    /* toast */
+    const toastEl = document.createElement("div");
+    toastEl.className = "toast";
+    document.body.appendChild(toastEl);
+    let timer = null;
+    function toast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(timer);
+      timer = setTimeout(() => toastEl.classList.remove("show"), 1600);
+    }
+    function copyText(text) {
+      const done = () => toast("📋 คัดลอกแล้ว: " + text);
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done).catch(fallback);
+      else fallback();
+      function fallback() {
+        const ta = document.createElement("textarea");
+        ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); done(); } catch { toast("คัดลอกไม่ได้ — ก๊อปเอง: " + text); }
+        document.body.removeChild(ta);
+      }
+    }
+
+    let cat = "all";
+    function render() {
+      const list = D.guides.filter(g => cat === "all" || g.cat === cat);
+      document.getElementById("glist").innerHTML = list.map(g => `
+        <div class="gcard" data-id="${g.id}">
+          <div class="ghead">
+            <span class="gico">${g.icon}</span>
+            <div class="gtitle"><h3>${esc(g.title)}</h3><span class="gwho">${esc(g.who)}</span></div>
+            <span class="gchev">▾</span>
+          </div>
+          <div class="gbody">
+            ${g.steps.map((s, i) => {
+              const w = WHERE[s.where] || WHERE.web;
+              return `
+              <div class="gstep">
+                <span class="gnum">${i + 1}</span>
+                <span class="wb ${w.cls}" title="${w.hint}">${w.label}</span>
+                <div class="gtext">${esc(s.t)}
+                  ${s.cmd ? `<button class="gcmd" data-copy="${esc(s.cmd)}"><code>/${esc(s.cmd)}</code><span>คัดลอก</span></button>` : ""}
+                </div>
+              </div>`;
+            }).join("")}
+            ${g.tip ? `<div class="gtip">💡 ${esc(g.tip)}</div>` : ""}
+          </div>
+        </div>`).join("");
+    }
+
+    document.addEventListener("click", (e) => {
+      const copyBtn = e.target.closest(".gcmd");
+      if (copyBtn) { copyText("/" + copyBtn.dataset.copy); return; }
+      const head = e.target.closest(".ghead");
+      if (head) { head.closest(".gcard").classList.toggle("open"); return; }
+      const fb = e.target.closest("#gfilters .fbtn");
+      if (fb) {
+        cat = fb.dataset.gcat;
+        document.querySelectorAll("#gfilters .fbtn").forEach(b => b.classList.toggle("active", b === fb));
+        render();
+      }
+    });
+
+    render();
+    // เปิดใบแรกไว้ให้เห็นหน้าตา
+    const first = document.querySelector(".gcard");
+    if (first) first.classList.add("open");
+  })();
+  </script>
+</body>
+</html>
