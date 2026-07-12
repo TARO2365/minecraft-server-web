@@ -1,0 +1,95 @@
+{
+  "_คำอธิบาย": "ข้อมูลระบบยศ — แก้ผ่านหน้าเว็บ (ปุ่ม 🎖 จัดการยศ) ได้เลย ไม่ต้องแตะไฟล์นี้ / การกด 'ใช้กับเซิร์ฟ' จะส่งคำสั่ง LuckPerms ผ่าน RCON แบบ realtime",
+
+  "presets": {
+    "basic": {
+      "name": "🧰 พื้นฐาน",
+      "desc": "คำสั่งจำเป็นของผู้เล่นทุกคน: บ้าน วาร์ป ทัก โอนเงิน รับคิท",
+      "perms": [
+        "essentials.spawn", "essentials.sethome", "essentials.home",
+        "essentials.tpa", "essentials.tpaccept", "essentials.tpdeny",
+        "essentials.msg", "essentials.pay", "essentials.balance",
+        "essentials.list", "essentials.help",
+        "essentials.kits.start", "essentials.kits.tools"
+      ]
+    },
+    "island": {
+      "name": "🧱 เกาะ OneBlock",
+      "desc": "ทุกอย่างเกี่ยวกับเกาะ: สร้าง วาร์ป ทีม เลเวล เควสเกาะ",
+      "perms": [
+        "aoneblock.island.*",
+        "aoneblock.challenges.*"
+      ]
+    },
+    "economy": {
+      "name": "🛒 เศรษฐกิจ",
+      "desc": "ร้านค้ากลาง ซื้อ-ขายของ",
+      "perms": [
+        "economyshopgui.shop",
+        "economyshopgui.sellall",
+        "economyshopgui.sellgui"
+      ]
+    },
+    "vip": {
+      "name": "💎 ความสะดวก VIP",
+      "desc": "ของหรูไม่กระทบสมดุล: บินบนเกาะ, /back, หมวก, ช่างเสมือน",
+      "perms": [
+        "essentials.fly", "essentials.back", "essentials.hat",
+        "essentials.workbench", "essentials.enderchest",
+        "aoneblock.island.fly"
+      ]
+    },
+    "mod": {
+      "name": "🛡 ผู้ช่วยดูแล",
+      "desc": "เครื่องมือดูแลเซิร์ฟ: เตะ ปิดปาก ดูของ ตรวจกริฟ",
+      "perms": [
+        "essentials.kick", "essentials.mute", "essentials.tempban",
+        "essentials.socialspy", "essentials.invsee", "essentials.tp",
+        "coreprotect.inspect", "coreprotect.lookup"
+      ]
+    },
+    "admin": {
+      "name": "⚡ แอดมินเต็มระบบ",
+      "desc": "ทุกสิทธิ์ในเซิร์ฟ — ให้เฉพาะคนที่ไว้ใจสุดๆ",
+      "perms": ["*"]
+    }
+  },
+
+  "ranks": [
+    {
+      "id": "novice", "display": "มือใหม่", "icon": "☆", "color": "&7", "weight": 10,
+      "presets": ["basic", "island", "economy"], "extra": [],
+      "note": "ยศเริ่มต้นของทุกคน — เล่นได้ครบทุกระบบหลัก"
+    },
+    {
+      "id": "adventurer", "display": "นักผจญภัย", "icon": "★", "color": "&a", "weight": 20,
+      "presets": ["basic", "island", "economy"], "extra": ["essentials.back"],
+      "note": "อัปเกรดแรก: ได้ /back กลับจุดตาย — ตั้งเงื่อนไขเช่นเล่นครบ 5 ชม. หรือเลเวลเกาะ 50"
+    },
+    {
+      "id": "hero", "display": "ฮีโร่", "icon": "◆", "color": "&b", "weight": 30,
+      "presets": ["basic", "island", "economy"], "extra": ["essentials.back", "essentials.hat", "essentials.workbench"],
+      "note": "ได้โต๊ะคราฟพกพา /workbench + ใส่บล็อกเป็นหมวก — เงื่อนไขเช่นฆ่าบอสโซนแรก"
+    },
+    {
+      "id": "legend", "display": "ตำนาน", "icon": "✦", "color": "&6", "weight": 40,
+      "presets": ["basic", "island", "economy"], "extra": ["essentials.back", "essentials.hat", "essentials.workbench", "essentials.enderchest"],
+      "note": "สุดสาย progression: ได้ /enderchest พกพา — เงื่อนไขเช่นเลเวลเกาะ 500 หรือจบเควสหลัก"
+    },
+    {
+      "id": "vip", "display": "VIP", "icon": "♥", "color": "&d", "weight": 50,
+      "presets": ["basic", "island", "economy", "vip"], "extra": [],
+      "note": "สายสนับสนุนเซิร์ฟ: บินบนเกาะตัวเอง + ของอำนวยความสะดวก (ไม่มีผลต่อความแรง — ตามหลักไม่ pay-to-win)"
+    },
+    {
+      "id": "helper", "display": "ผู้ช่วย", "icon": "●", "color": "&9", "weight": 80,
+      "presets": ["basic", "island", "economy", "vip", "mod"], "extra": [],
+      "note": "ทีมงานดูแล: เตะ/ปิดปากคนป่วน + ตรวจกริฟด้วย CoreProtect"
+    },
+    {
+      "id": "admin", "display": "แอดมิน", "icon": "⚡", "color": "&c", "weight": 100,
+      "presets": ["admin"], "extra": [],
+      "note": "เจ้าของและมือขวา — ทุกสิทธิ์"
+    }
+  ]
+}

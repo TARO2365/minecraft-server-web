@@ -168,8 +168,9 @@
       if (!cmd) return;
       if (await api("/api/command", { cmd })) inp.value = "";
     });
-    // ปุ่มตั้งค่าเซิร์ฟ
+    // ปุ่มตั้งค่าเซิร์ฟ + จัดการยศ
     $("#btnConfig").addEventListener("click", openConfig);
+    $("#btnRanks").addEventListener("click", openRanks);
     // ปุ่มคำสั่งด่วน
     const quick = [
       ["list", "ใครออนบ้าง"], ["say สวัสดีชาวเซิฟ!", "ประกาศ"], ["spark tps", "เช็ก TPS"],
@@ -291,6 +292,193 @@
     $("#cfgOverlay").classList.remove("show");
     document.body.style.overflow = "";
   }
+
+  /* ==========================================================
+     🎖 จัดการยศ (LuckPerms) — realtime ผ่าน RCON
+     ข้อมูลเก็บใน ranks.json / กด "ใช้กับเซิร์ฟ" = ยิงคำสั่งทันที
+     ========================================================== */
+  let rankData = null;
+  let editingRankId = null;
+  const ICON_SUGGEST = ["☆", "★", "◆", "✦", "♥", "●", "♦", "⚡"];
+  const COLORS = [["&7", "เทา"], ["&f", "ขาว"], ["&a", "เขียว"], ["&b", "ฟ้า"], ["&e", "เหลือง"], ["&6", "ทอง"], ["&c", "แดง"], ["&d", "ชมพู"], ["&5", "ม่วง"], ["&9", "น้ำเงิน"]];
+  const MC_COLOR = { "&7": "#AAAAAA", "&f": "#FFFFFF", "&a": "#55FF55", "&b": "#55FFFF", "&e": "#FFFF55", "&6": "#FFAA00", "&c": "#FF5555", "&d": "#FF55FF", "&5": "#AA00AA", "&9": "#5555FF" };
+
+  async function rankApi(action, body) {
+    try {
+      const r = await fetch("/api/ranks/" + action, { method: "POST", headers: { "Content-Type": "application/json", ...pinHeaders() }, body: JSON.stringify(body || {}) });
+      if (r.status === 401) { askPin(); return { ok: false, error: "ต้องใส่ PIN" }; }
+      return await r.json();
+    } catch { return { ok: false, error: "ต่อ backend ไม่ได้" }; }
+  }
+
+  function rankForm(r) {
+    const isNew = !r;
+    r = r || { id: "", display: "", icon: "★", color: "&a", weight: 10, presets: ["basic"], extra: [], note: "" };
+    const presetBoxes = Object.entries(rankData.presets).map(([k, p]) => `
+      <label class="preset-box"><input type="checkbox" data-rpreset="${k}" ${r.presets.includes(k) ? "checked" : ""}>
+        <b>${p.name}</b><small>${p.desc} (${p.perms.length} สิทธิ์)</small></label>`).join("");
+    return `
+      <div class="rank-form" data-editing="${isNew ? "" : r.id}">
+        <div class="cfg-title">${isNew ? "➕ สร้างยศใหม่" : "✏ แก้ยศ: " + esc(r.display)}</div>
+        <div class="cfg-row"><label>รหัสยศ (a-z ไม่มีเว้นวรรค)<small>ใช้ในคำสั่ง lp — สร้างแล้วห้ามเปลี่ยน</small></label>
+          <input type="text" id="rkId" value="${esc(r.id)}" ${isNew ? "" : "disabled"} placeholder="เช่น vip"></div>
+        <div class="cfg-row"><label>ชื่อโชว์<small>ขึ้นในแชท/แถบ tab</small></label>
+          <input type="text" id="rkDisplay" value="${esc(r.display)}" placeholder="เช่น มือใหม่"></div>
+        <div class="cfg-row"><label>ไอคอนหน้าชื่อ<small>สัญลักษณ์ที่ Minecraft แสดงได้</small></label>
+          <div class="icon-pick"><input type="text" id="rkIcon" value="${esc(r.icon)}" maxlength="2">
+          ${ICON_SUGGEST.map(i => `<button type="button" class="ipick" data-icon="${i}">${i}</button>`).join("")}</div></div>
+        <div class="cfg-row"><label>สียศ</label>
+          <select id="rkColor">${COLORS.map(([c, n]) => `<option value="${c}" ${c === r.color ? "selected" : ""}>${n} (${c})</option>`).join("")}</select></div>
+        <div class="cfg-row"><label>น้ำหนัก (weight)<small>เลขสูง = ยศใหญ่กว่า ใช้เรียงใน tab</small></label>
+          <input type="number" id="rkWeight" value="${r.weight}"></div>
+        <div class="cfg-title" style="margin-top:14px">ชุดสิทธิ์ (ติ๊กได้หลายชุด)</div>
+        <div class="preset-grid">${presetBoxes}</div>
+        <div class="cfg-row"><label>สิทธิ์เพิ่มเติม<small>1 บรรทัด = 1 permission node</small></label>
+          <textarea id="rkExtra" rows="3" placeholder="เช่น essentials.back">${esc((r.extra || []).join("\n"))}</textarea></div>
+        <div class="cfg-actions">
+          <span class="cfg-note" id="rkPreview"></span>
+          <button class="pbtn run" id="rkSave">${isNew ? "สร้าง + ใช้กับเซิร์ฟ" : "บันทึก + ใช้กับเซิร์ฟ"}</button>
+        </div>
+      </div>`;
+  }
+
+  function renderRankModal() {
+    const list = rankData.ranks.slice().sort((a, b) => b.weight - a.weight).map(r => `
+      <div class="rank-row">
+        <span class="rank-badge" style="color:${MC_COLOR[r.color] || "#fff"}">${esc(r.icon)} ${esc(r.display)}</span>
+        <span class="rank-meta">${r.id} • w${r.weight} • ${r.presets.length} ชุด${r.extra.length ? " +" + r.extra.length : ""}</span>
+        <span class="rank-btns">
+          <button class="rbtn" data-redit="${r.id}">✏ แก้</button>
+          <button class="rbtn apply" data-rapply="${r.id}">⚡ ใช้กับเซิร์ฟ</button>
+          <button class="rbtn del" data-rdel="${r.id}">🗑</button>
+        </span>
+      </div>`).join("");
+
+    const presetEditor = Object.entries(rankData.presets).map(([k, p]) => `
+      <div class="cfg-row preset-edit"><label>${p.name}<small>${p.desc}</small></label>
+        <textarea data-preset="${k}" rows="3">${esc(p.perms.join("\n"))}</textarea></div>`).join("");
+
+    $("#rankModal").innerHTML = `
+      <div class="modal-head">
+        <div class="ico">🎖</div>
+        <div><h2>จัดการยศ (LuckPerms)</h2><div class="ver">กด ⚡ = มีผลในเซิร์ฟทันที (ต้องเซิร์ฟออนไลน์) • ข้อมูลเก็บใน ranks.json</div></div>
+        <button class="close-btn" data-rankclose>×</button>
+      </div>
+      <div class="modal-body">
+        <div class="cfg-title">ยศทั้งหมด (${rankData.ranks.length})</div>
+        <div class="rank-list">${list}</div>
+        <div class="cfg-row assign-row"><label>ตั้งยศให้ผู้เล่น<small>ผู้เล่นต้องเคยเข้าเซิร์ฟแล้ว</small></label>
+          <input type="text" id="asPlayer" placeholder="ชื่อผู้เล่น">
+          <select id="asRank">${rankData.ranks.map(r => `<option value="${r.id}">${esc(r.icon)} ${esc(r.display)}</option>`).join("")}</select>
+          <button class="pbtn send" id="asGo">ตั้งยศ</button></div>
+        <div id="rankFormWrap">${rankForm(editingRankId ? rankData.ranks.find(x => x.id === editingRankId) : null)}</div>
+        <details class="cfg-adv"><summary>🔧 แก้ชุดสิทธิ์ทั้ง 6 ชุด (มีผลกับทุกยศที่ใช้ชุดนั้น — แก้แล้วกด ⚡ ยศนั้นซ้ำ)</summary>
+          ${presetEditor}
+          <div class="cfg-actions"><button class="pbtn run" id="presetSave">บันทึกชุดสิทธิ์</button></div>
+        </details>
+      </div>`;
+    updateRankPreview();
+  }
+
+  function updateRankPreview() {
+    const el = $("#rkPreview");
+    if (!el) return;
+    const icon = ($("#rkIcon") || {}).value || "";
+    const disp = ($("#rkDisplay") || {}).value || "";
+    const color = ($("#rkColor") || {}).value || "&f";
+    el.innerHTML = `ตัวอย่างในแชท: <span class="mc-preview">[<span style="color:${MC_COLOR[color] || "#fff"}">${esc(icon)} ${esc(disp)}</span>]</span>`;
+  }
+
+  async function openRanks() {
+    let r;
+    try {
+      const res = await fetch("/api/ranks", { headers: pinHeaders() });
+      if (res.status === 401) { askPin(); return; }
+      r = await res.json();
+    } catch { r = null; }
+    if (!r || !r.ok) { toast("⚠ " + (r ? r.error : "ต่อ backend ไม่ได้ — เปิดผ่าน start-web.bat ก่อน")); return; }
+    rankData = r.data;
+    editingRankId = null;
+    renderRankModal();
+    $("#rankOverlay").classList.add("show");
+    document.body.style.overflow = "hidden";
+  }
+  function closeRanks() {
+    $("#rankOverlay").classList.remove("show");
+    document.body.style.overflow = "";
+  }
+
+  function collectRankForm() {
+    const id = ($("#rkId").value || "").trim().toLowerCase();
+    if (!/^[a-z0-9_]{2,20}$/.test(id)) { toast("⚠ รหัสยศต้องเป็น a-z/0-9 ยาว 2-20 ตัว"); return null; }
+    const presets = [...document.querySelectorAll("[data-rpreset]:checked")].map(x => x.dataset.rpreset);
+    return {
+      id,
+      display: $("#rkDisplay").value.trim() || id,
+      icon: $("#rkIcon").value.trim() || "★",
+      color: $("#rkColor").value,
+      weight: parseInt($("#rkWeight").value) || 10,
+      presets,
+      extra: $("#rkExtra").value.split("\n").map(x => x.trim()).filter(Boolean),
+      note: (rankData.ranks.find(x => x.id === id) || {}).note || ""
+    };
+  }
+
+  async function saveAndApplyRank() {
+    const r = collectRankForm();
+    if (!r) return;
+    const idx = rankData.ranks.findIndex(x => x.id === r.id);
+    if (idx >= 0) rankData.ranks[idx] = r; else rankData.ranks.push(r);
+    const s = await rankApi("save", { data: rankData });
+    if (!s.ok) { toast("⚠ " + s.error); return; }
+    const a = await rankApi("apply", { rankId: r.id });
+    if (a.ok) toast(`⚡ ยศ "${r.display}" มีผลในเซิร์ฟแล้ว`);
+    else toast(`💾 บันทึกแล้ว — ${a.error} (กด ⚡ ซ้ำตอนเซิร์ฟออนไลน์)`);
+    editingRankId = null;
+    renderRankModal();
+  }
+
+  document.addEventListener("click", async (e) => {
+    if (e.target.closest("[data-rankclose]") || e.target.id === "rankOverlay") { closeRanks(); return; }
+    const ip = e.target.closest(".ipick");
+    if (ip) { $("#rkIcon").value = ip.dataset.icon; updateRankPreview(); return; }
+    const ed = e.target.closest("[data-redit]");
+    if (ed) { editingRankId = ed.dataset.redit; renderRankModal(); return; }
+    const ap = e.target.closest("[data-rapply]");
+    if (ap) {
+      ap.disabled = true;
+      const r = await rankApi("apply", { rankId: ap.dataset.rapply });
+      ap.disabled = false;
+      toast(r.ok ? "⚡ อัปเดตยศเข้าเซิร์ฟแล้ว" : "⚠ " + r.error);
+      return;
+    }
+    const dl = e.target.closest("[data-rdel]");
+    if (dl) {
+      const rk = rankData.ranks.find(x => x.id === dl.dataset.rdel);
+      if (!confirm(`ลบยศ "${rk.display}" (${rk.id})? ผู้เล่นที่ถือยศนี้จะหลุดกลับ default`)) return;
+      const r = await rankApi("delete", { rankId: rk.id });
+      if (r.ok) { toast("🗑 ลบยศแล้ว" + (r.serverApplied ? "" : " (จากไฟล์ — เซิร์ฟออฟไลน์)")); openRanks(); }
+      else toast("⚠ " + r.error);
+      return;
+    }
+    if (e.target.id === "rkSave") { saveAndApplyRank(); return; }
+    if (e.target.id === "asGo") {
+      const r = await rankApi("assign", { player: $("#asPlayer").value, rankId: $("#asRank").value });
+      toast(r.ok ? "🎖 ตั้งยศให้แล้ว" : "⚠ " + r.error);
+      return;
+    }
+    if (e.target.id === "presetSave") {
+      document.querySelectorAll("[data-preset]").forEach(ta => {
+        rankData.presets[ta.dataset.preset].perms = ta.value.split("\n").map(x => x.trim()).filter(Boolean);
+      });
+      const r = await rankApi("save", { data: rankData });
+      toast(r.ok ? "💾 บันทึกชุดสิทธิ์แล้ว — อย่าลืมกด ⚡ ยศที่ใช้ชุดนี้" : "⚠ " + r.error);
+      return;
+    }
+  });
+  document.addEventListener("input", (e) => {
+    if (["rkIcon", "rkDisplay", "rkColor"].includes(e.target.id)) updateRankPreview();
+  });
 
   /* ---------- ปลั๊กอินที่ยังขาด ---------- */
   function renderPlanned() {

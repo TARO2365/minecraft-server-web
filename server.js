@@ -20,6 +20,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const net = require("net");
 const { spawn, execFile } = require("child_process");
 
 /* ---------- ตั้งค่า ---------- */
@@ -31,6 +32,7 @@ const SERVER_DIR = "C:\\Users\\Taro\\OneDrive\\เดสก์ท็อป\\serv
 const LOG_FILE = path.join(SERVER_DIR, "logs", "latest.log");
 const START_BAT = path.join(SERVER_DIR, "start.bat");
 const SERVER_PROPS = path.join(SERVER_DIR, "server.properties");
+const RANKS_FILE = path.join(WEB_DIR, "ranks.json");
 /* ค่าลับ — ห้ามส่งขึ้นหน้าเว็บและห้ามแก้ผ่านเว็บ */
 const SECRET_KEYS = ["rcon.password", "management-server-secret", "management-server-tls-keystore-password"];
 
@@ -136,13 +138,77 @@ function stopServer(cb) {
   cb({ ok: true });
 }
 
+/* ---------- RCON: ส่งคำสั่งเข้าเซิร์ฟได้แม้ถูกเปิดจากหน้าต่าง CMD ---------- */
+function readRconSettings() {
+  try {
+    const txt = fs.readFileSync(SERVER_PROPS, "utf8");
+    const get = (k) => (txt.match(new RegExp("^" + k.replace(/\./g, "\\.") + "=(.*)$", "m")) || [])[1] || "";
+    return { enabled: get("enable-rcon") === "true", port: parseInt(get("rcon.port")) || 25575, password: get("rcon.password") };
+  } catch (e) { return { enabled: false }; }
+}
+
+/* ส่งชุดคำสั่งผ่าน RCON ตามลำดับ คืน log คำตอบของแต่ละคำสั่ง */
+function rconExec(cmds, cb) {
+  const rc = readRconSettings();
+  if (!rc.enabled || !rc.password) return cb({ ok: false, error: "RCON ไม่ได้เปิดใน server.properties" });
+  const sock = net.createConnection({ host: "127.0.0.1", port: rc.port });
+  const results = [];
+  let buf = Buffer.alloc(0);
+  let step = -1; // -1 = รอ auth
+  let finished = false;
+  const done = (r) => { if (!finished) { finished = true; sock.destroy(); cb(r); } };
+  const timer = setTimeout(() => done({ ok: false, error: "RCON timeout" }), 15000);
+
+  function packet(id, type, body) {
+    const b = Buffer.from(body, "utf8");
+    const p = Buffer.alloc(14 + b.length);
+    p.writeInt32LE(10 + b.length, 0); p.writeInt32LE(id, 4); p.writeInt32LE(type, 8);
+    b.copy(p, 12);
+    return p;
+  }
+  function next() {
+    step++;
+    if (step >= cmds.length) { clearTimeout(timer); return done({ ok: true, log: results }); }
+    sock.write(packet(step + 10, 2, cmds[step]));
+  }
+  sock.on("connect", () => sock.write(packet(1, 3, rc.password)));
+  sock.on("data", (d) => {
+    buf = Buffer.concat([buf, d]);
+    while (buf.length >= 4) {
+      const len = buf.readInt32LE(0);
+      if (buf.length < 4 + len) break;
+      const id = buf.readInt32LE(4);
+      const body = buf.toString("utf8", 12, 4 + len - 2);
+      buf = buf.slice(4 + len);
+      if (step === -1) {
+        if (id === -1) { clearTimeout(timer); return done({ ok: false, error: "รหัส RCON ไม่ถูกต้อง" }); }
+        next();
+      } else {
+        results.push({ cmd: cmds[step], reply: body.replace(/§./g, "") });
+        next();
+      }
+    }
+  });
+  sock.on("error", () => { clearTimeout(timer); done({ ok: false, error: "ต่อ RCON ไม่ได้ — เซิร์ฟออฟไลน์อยู่ เปิดเซิร์ฟก่อน" }); });
+}
+
 function sendCommand(cmd, cb) {
-  if (!mcProcess) return cb({ ok: false, error: "ส่งคำสั่งได้เฉพาะเซิร์ฟที่กด Run จากเว็บ (ตัวที่รันอยู่ถูกเปิดจากข้างนอก)" });
   const clean = String(cmd || "").trim().replace(/^\//, "");
   if (!clean) return cb({ ok: false, error: "คำสั่งว่าง" });
-  pushLog("> " + clean, "input");
-  mcProcess.stdin.write(clean + "\n");
-  cb({ ok: true });
+  if (mcProcess) {
+    pushLog("> " + clean, "input");
+    mcProcess.stdin.write(clean + "\n");
+    return cb({ ok: true });
+  }
+  /* เซิร์ฟถูกเปิดจากข้างนอก — ยิงผ่าน RCON แทน */
+  rconExec([clean], (r) => {
+    if (r.ok) {
+      pushLog("> " + clean + "  (ผ่าน RCON)", "input");
+      const reply = (r.log[0] || {}).reply;
+      if (reply) pushLog(reply, "log");
+    }
+    cb(r.ok ? { ok: true } : r);
+  });
 }
 
 /* ---------- HTTP ---------- */
@@ -218,6 +284,78 @@ const server = http.createServer((req, res) => {
         }
         json(res, 200, { ok: true, applied });
       } catch (e) { json(res, 500, { ok: false, error: "เขียนไฟล์ไม่ได้: " + e.message }); }
+    });
+    return;
+  }
+
+  /* --- ระบบยศ (LuckPerms ผ่าน RCON) --- */
+  if (p === "/api/ranks" && req.method === "GET") {
+    try {
+      const data = JSON.parse(fs.readFileSync(RANKS_FILE, "utf8"));
+      return json(res, 200, { ok: true, data });
+    } catch (e) { return json(res, 500, { ok: false, error: "อ่าน ranks.json ไม่ได้: " + e.message }); }
+  }
+  if (p.startsWith("/api/ranks/") && req.method === "POST") {
+    let body = "";
+    req.on("data", (d) => (body += d));
+    req.on("end", () => {
+      let b = {};
+      try { b = JSON.parse(body); } catch (e) {}
+      const action = p.slice("/api/ranks/".length);
+
+      /* บันทึกข้อมูลยศ/preset ลงไฟล์ (ยังไม่ยิงเข้าเซิร์ฟ) */
+      if (action === "save") {
+        if (!b.data || !Array.isArray(b.data.ranks) || typeof b.data.presets !== "object")
+          return json(res, 400, { ok: false, error: "ข้อมูลไม่ครบ" });
+        fs.writeFileSync(RANKS_FILE, JSON.stringify(b.data, null, 2));
+        return json(res, 200, { ok: true });
+      }
+
+      const data = JSON.parse(fs.readFileSync(RANKS_FILE, "utf8"));
+
+      /* ยิงยศเข้าเซิร์ฟแบบ realtime */
+      if (action === "apply") {
+        const r = data.ranks.find((x) => x.id === b.rankId);
+        if (!r) return json(res, 404, { ok: false, error: "ไม่พบยศ " + b.rankId });
+        const perms = new Set();
+        (r.presets || []).forEach((pn) => (data.presets[pn] || { perms: [] }).perms.forEach((x) => perms.add(x)));
+        (r.extra || []).forEach((x) => x.trim() && perms.add(x.trim()));
+        const prefix = `&8[${r.color}${r.icon} ${r.display}&8]&r `;
+        const cmds = [
+          `lp creategroup ${r.id}`,
+          `lp group ${r.id} setweight ${r.weight}`,
+          `lp group ${r.id} meta setprefix ${r.weight} "${prefix}"`,
+          ...[...perms].map((x) => `lp group ${r.id} permission set ${x} true`)
+        ];
+        return rconExec(cmds, (out) => {
+          if (out.ok) pushSystem(`🎖 อัปเดตยศ "${r.display}" (${r.id}) เข้าเซิร์ฟแล้ว — สิทธิ์ ${perms.size} รายการ`);
+          json(res, out.ok ? 200 : 502, out);
+        });
+      }
+
+      /* ลบยศออกจากเซิร์ฟ + ไฟล์ */
+      if (action === "delete") {
+        const idx = data.ranks.findIndex((x) => x.id === b.rankId);
+        if (idx < 0) return json(res, 404, { ok: false, error: "ไม่พบยศ" });
+        const removed = data.ranks.splice(idx, 1)[0];
+        fs.writeFileSync(RANKS_FILE, JSON.stringify(data, null, 2));
+        return rconExec([`lp deletegroup ${removed.id}`], (out) => {
+          pushSystem(`🗑 ลบยศ "${removed.display}" ${out.ok ? "ออกจากเซิร์ฟแล้ว" : "(จากไฟล์ — เซิร์ฟออฟไลน์ ค่อยลบซ้ำตอนออนไลน์)"}`);
+          json(res, 200, { ok: true, serverApplied: out.ok });
+        });
+      }
+
+      /* ตั้งยศให้ผู้เล่น */
+      if (action === "assign") {
+        const player = String(b.player || "").trim();
+        if (!player || !b.rankId) return json(res, 400, { ok: false, error: "ใส่ชื่อผู้เล่นและเลือกยศก่อน" });
+        return rconExec([`lp user ${player} parent set ${b.rankId}`], (out) => {
+          if (out.ok) pushSystem(`🎖 ตั้งยศ ${b.rankId} ให้ ${player} แล้ว`);
+          json(res, out.ok ? 200 : 502, out);
+        });
+      }
+
+      json(res, 404, { ok: false, error: "ไม่รู้จักคำสั่ง " + action });
     });
     return;
   }

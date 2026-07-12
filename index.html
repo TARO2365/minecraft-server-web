@@ -20,6 +20,7 @@
         <div class="panel-btns">
           <button id="btnStart" class="pbtn run" disabled>▶ Run เซิร์ฟ</button>
           <button id="btnStop" class="pbtn stop" disabled>⏹ Stop</button>
+          <button id="btnRanks" class="pbtn cfg">🎖 จัดการยศ</button>
           <button id="btnConfig" class="pbtn cfg">⚙ ตั้งค่าเซิร์ฟ</button>
         </div>
       </div>
@@ -63,6 +64,11 @@
   <!-- modal ตั้งค่าเซิร์ฟ (server.properties) -->
   <div class="overlay" id="cfgOverlay">
     <div class="modal" id="cfgModal"></div>
+  </div>
+
+  <!-- modal จัดการยศ (LuckPerms ผ่าน RCON) -->
+  <div class="overlay" id="rankOverlay">
+    <div class="modal" id="rankModal"></div>
   </div>
 
   <script src="data.js"></script>
