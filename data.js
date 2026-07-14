@@ -650,6 +650,18 @@ window.MC = {
       ],
       tip: "อาการแลคส่วนใหญ่ของเซิร์ฟเล็ก: view-distance สูงไป หรือมอบ/ไอเทมตกค้างเยอะ"
     },
+    {
+      id: "g-ai-rcon", cat: "ops", icon: "🤖", title: "ให้ AI (Claude Code) คุมเซิร์ฟผ่าน RCON — MCP (เตรียมไว้ ยังไม่เปิดใช้)",
+      who: "🖥 เซ็ตครั้งเดียว",
+      steps: [
+        { t: "ระบบนี้คือ MCP ชื่อ minecraft-rcon (จาก repo MinecraftCodeFoundary/Minecraft-MCP-Server) — ทำให้ Claude Code ส่งคำสั่งเข้าเซิร์ฟ อ่าน log และเช็คสถานะปลั๊กอินได้เองในแชท", where: "file" },
+        { t: "สคริปต์ตัวกลางเตรียมไว้แล้วที่ mcp-rcon.ps1 (โฟลเดอร์เว็บ) — รหัส RCON ไม่ถูกเก็บใน config ของ AI สคริปต์อ่านจาก server.properties สดๆ ตอนรันเท่านั้น", where: "file" },
+        { t: "เปิดใช้: เปิด PowerShell ในโฟลเดอร์เว็บแล้วรัน:", cmd: "claude mcp add minecraft-rcon -- powershell -NoProfile -ExecutionPolicy Bypass -File \"C:\\Users\\Taro\\minecraft-server-web\\mcp-rcon.ps1\"", where: "file" },
+        { t: "จากนั้นสั่ง AI ได้เลย เช่น \"เช็คว่าปลั๊กอินโหลดครบไหม\" หรือ \"ดู error ล่าสุดแล้ววิเคราะห์ให้หน่อย\" — AI จะยิงคำสั่ง+อ่าน log แล้วสรุปกลับมาเอง", where: "file" },
+        { t: "เลิกใช้เมื่อไหร่ก็ได้:", cmd: "claude mcp remove minecraft-rcon", where: "file" }
+      ],
+      tip: "ต่างจากช่องคำสั่งในเว็บยังไง: เว็บ = เราพิมพ์เอง ทีละคำสั่ง / MCP = AI ยิงเอง อ่านผลเอง วนแก้จนจบงาน — เซิร์ฟต้องเปิดอยู่และ RCON เปิดแล้ว (ของเราเปิดอยู่แล้ว)"
+    },
 
     /* ===== หมวด: เซ็ตครั้งแรก ===== */
     {

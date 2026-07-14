@@ -25,6 +25,10 @@ tools: Agent, Read, Glob, Grep
 | `docs-thai` | เขียน/อัปเดตคำอธิบายภาษาไทยใน data.js |
 | `installer` | วางแผนขั้นตอนติดตั้ง/อัปเกรด dependencies |
 | `verifier` | ตรวจสอบ data.js และโค้ดก่อน commit |
+| `mob-smith` | เขียน MythicMobs config (มอน/บอส/สกิล/ดรอป) เป็นไฟล์ร่างรออนุมัติ |
+| `balancer` | ตรวจตัวเลขสมดุล: เวลาฆ่า ดรอป ราคา เศรษฐกิจ — ด่านตรวจก่อนเนื้อหาลงเซิร์ฟ |
+
+**สายงานเนื้อหาเกม:** สเปกโซน → `mob-smith` ร่าง config → `balancer` ตรวจเลข → เสนอเจ้าของ → `installer` ลงจริง → `verifier` เช็ก log
 
 ---
 
