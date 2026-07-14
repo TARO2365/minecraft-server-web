@@ -33,6 +33,10 @@ const LOG_FILE = path.join(SERVER_DIR, "logs", "latest.log");
 const START_BAT = path.join(SERVER_DIR, "start.bat");
 const SERVER_PROPS = path.join(SERVER_DIR, "server.properties");
 const RANKS_FILE = path.join(WEB_DIR, "ranks.json");
+const IA_NAMESPACE = "oneblock";
+const IA_DIR = path.join(SERVER_DIR, "plugins", "ItemsAdder", "contents", IA_NAMESPACE);
+const IA_ITEMS_YML = path.join(IA_DIR, "configs", "items.yml");
+const IA_TEXTURE_DIR = path.join(IA_DIR, "resourcepack", "assets", IA_NAMESPACE, "textures", "item");
 /* ค่าลับ — ห้ามส่งขึ้นหน้าเว็บและห้ามแก้ผ่านเว็บ */
 const SECRET_KEYS = ["rcon.password", "management-server-secret", "management-server-tls-keystore-password"];
 
@@ -356,6 +360,135 @@ const server = http.createServer((req, res) => {
       }
 
       json(res, 404, { ok: false, error: "ไม่รู้จักคำสั่ง " + action });
+    });
+    return;
+  }
+
+  /* --- 🎨 สร้างไอเทม ItemsAdder --- */
+  if (p === "/api/items" && req.method === "GET") {
+    try {
+      const txt = fs.existsSync(IA_ITEMS_YML) ? fs.readFileSync(IA_ITEMS_YML, "utf8") : "";
+      const items = [];
+      const matches = [...txt.matchAll(/^  ([a-z0-9_]+):[ \t]*$/gm)];
+      matches.forEach((m, i) => {
+        const id = m[1];
+        const end = i + 1 < matches.length ? matches[i + 1].index : txt.length;
+        const block = txt.slice(m.index, end);
+        const dn = (block.match(/display_name:\s*'([^']+)'/) || block.match(/display_name:\s*(.+)/) || [])[1] || id;
+        const hasTexture = fs.existsSync(path.join(IA_TEXTURE_DIR, id + ".png"));
+        const mat = (block.match(/material:\s*(\w+)/) || [])[1] || "?";
+        items.push({ id, displayName: dn, material: mat, hasTexture });
+      });
+      return json(res, 200, { ok: true, namespace: IA_NAMESPACE, items });
+    } catch (e) { return json(res, 500, { ok: false, error: e.message }); }
+  }
+  if (p.startsWith("/ia-texture/")) {
+    const name = path.basename(p).replace(/[^a-z0-9_.]/g, "");
+    const f = path.join(IA_TEXTURE_DIR, name);
+    if (fs.existsSync(f)) { res.writeHead(200, { "Content-Type": "image/png" }); return res.end(fs.readFileSync(f)); }
+    res.writeHead(404); return res.end();
+  }
+  if (p === "/api/items/create" && req.method === "POST") {
+    let body = "";
+    req.on("data", (d) => (body += d));
+    req.on("end", () => {
+      try {
+        const b = JSON.parse(body);
+        const id = String(b.id || "").trim().toLowerCase();
+        if (!/^[a-z0-9_]{2,32}$/.test(id)) return json(res, 400, { ok: false, error: "รหัสไอเทมต้องเป็น a-z/0-9/_ ยาว 2-32 ตัว" });
+        let yml = fs.readFileSync(IA_ITEMS_YML, "utf8");
+        if (new RegExp("^  " + id + ":", "m").test(yml)) return json(res, 409, { ok: false, error: `มีไอเทม ${id} อยู่แล้ว — ใช้รหัสอื่น` });
+
+        /* texture (ถ้ามี) — รับเป็น base64 png */
+        let hasTexture = false;
+        if (b.textureBase64) {
+          const data = Buffer.from(b.textureBase64.replace(/^data:image\/png;base64,/, ""), "base64");
+          if (data.length > 512 * 1024) return json(res, 400, { ok: false, error: "รูปใหญ่เกิน 512KB — texture ควรเป็น png เล็กๆ เช่น 16x16 หรือ 32x32" });
+          fs.mkdirSync(IA_TEXTURE_DIR, { recursive: true });
+          fs.writeFileSync(path.join(IA_TEXTURE_DIR, id + ".png"), data);
+          hasTexture = true;
+        }
+
+        /* ประกอบ YAML block ตามรูปแบบ ItemsAdder 4.x */
+        const esc1 = (s) => String(s || "").replace(/'/g, "''");
+        const lines = [];
+        lines.push(`  ${id}:`);
+        lines.push(`    enabled: true`);
+        lines.push(`    display_name: '${esc1((b.color || "&f") + b.displayName)}'`);
+        const lore = (b.lore || []).map((x) => x.trim()).filter(Boolean);
+        if (lore.length) {
+          lines.push(`    lore:`);
+          lore.forEach((l) => lines.push(`      - '&7${esc1(l)}'`));
+        }
+        lines.push(`    resource:`);
+        lines.push(`      material: ${/^[A-Z_]+$/.test(b.material || "") ? b.material : "PAPER"}`);
+        if (hasTexture) {
+          lines.push(`      generate: true`);
+          lines.push(`      textures:`);
+          lines.push(`        - item/${id}`);
+        } else {
+          lines.push(`      generate: false`);
+        }
+        const st = b.stats || {};
+        const mods = [];
+        if (+st.damage) mods.push(`        attackDamage: ${+st.damage}`);
+        if (+st.speed) mods.push(`        attackSpeed: ${+st.speed}`);
+        if (+st.health) mods.push(`        maxHealth: ${+st.health}`);
+        if (mods.length) {
+          lines.push(`    attribute_modifiers:`);
+          lines.push(`      mainhand:`);
+          lines.push(...mods);
+        }
+        yml = yml.replace(/\s*$/, "\n") + "\n" + lines.join("\n") + "\n";
+        fs.writeFileSync(IA_ITEMS_YML, yml);
+        pushSystem(`🎨 สร้างไอเทม ${IA_NAMESPACE}:${id} แล้ว — กด "อัปเดต pack" เพื่อให้มีผลในเกม`);
+        json(res, 200, { ok: true, id, full: `${IA_NAMESPACE}:${id}`, hasTexture });
+      } catch (e) { json(res, 500, { ok: false, error: e.message }); }
+    });
+    return;
+  }
+  if (p === "/api/items/reload" && req.method === "POST") {
+    return rconExec(["iazip"], (out) => {
+      if (out.ok) pushSystem("📦 สั่งอัปเดต resource pack (iazip) แล้ว — รอสักครู่ ผู้เล่นในเซิร์ฟจะได้รับ pack ใหม่");
+      json(res, out.ok ? 200 : 502, out);
+    });
+  }
+
+  /* --- 🧍 สร้าง NPC (Citizens ผ่าน RCON) --- */
+  if (p === "/api/worlds" && req.method === "GET") {
+    try {
+      const worlds = fs.readdirSync(SERVER_DIR).filter((d) => {
+        try { return fs.existsSync(path.join(SERVER_DIR, d, "level.dat")); } catch (e) { return false; }
+      });
+      return json(res, 200, { ok: true, worlds });
+    } catch (e) { return json(res, 500, { ok: false, error: e.message }); }
+  }
+  if (p === "/api/npc/playerpos" && req.method === "POST") {
+    return rconExec(["data get entity Oxygenlave Pos"], (out) => {
+      if (!out.ok) return json(res, 502, out);
+      const m = ((out.log[0] || {}).reply || "").match(/\[(-?[\d.]+)d?,\s*(-?[\d.]+)d?,\s*(-?[\d.]+)d?\]/);
+      if (!m) return json(res, 404, { ok: false, error: "หาตำแหน่งไม่เจอ — Oxygenlave ต้องออนไลน์อยู่ในเกม" });
+      json(res, 200, { ok: true, x: Math.round(+m[1] * 10) / 10, y: Math.round(+m[2] * 10) / 10, z: Math.round(+m[3] * 10) / 10 });
+    });
+  }
+  if (p === "/api/npc/create" && req.method === "POST") {
+    let body = "";
+    req.on("data", (d) => (body += d));
+    req.on("end", () => {
+      let b = {};
+      try { b = JSON.parse(body); } catch (e) {}
+      const name = String(b.name || "").trim();
+      if (!name) return json(res, 400, { ok: false, error: "ตั้งชื่อ NPC ก่อน" });
+      const { x, y, z, world } = b.pos || {};
+      if ([x, y, z].some((v) => v === undefined || v === "") || !world) return json(res, 400, { ok: false, error: "ใส่ตำแหน่ง x y z และเลือกโลกก่อน" });
+      const cmds = [`npc create ${name.replace(/ /g, "_")} --at ${x}:${y}:${z}:${world}`];
+      if (b.skin) cmds.push(`npc skin ${String(b.skin).trim()}`);
+      if (b.lookclose) cmds.push(`npc lookclose`);
+      if (b.command) cmds.push(`npc command add ${String(b.command).trim().replace(/^\//, "")}`);
+      rconExec(cmds, (out) => {
+        if (out.ok) pushSystem(`🧍 สร้าง NPC "${name}" ที่ ${world} (${x}, ${y}, ${z}) แล้ว`);
+        json(res, out.ok ? 200 : 502, out);
+      });
     });
     return;
   }

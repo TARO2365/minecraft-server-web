@@ -168,9 +168,11 @@
       if (!cmd) return;
       if (await api("/api/command", { cmd })) inp.value = "";
     });
-    // ปุ่มตั้งค่าเซิร์ฟ + จัดการยศ
+    // ปุ่มตั้งค่าเซิร์ฟ + จัดการยศ + สร้างไอเทม + NPC
     $("#btnConfig").addEventListener("click", openConfig);
     $("#btnRanks").addEventListener("click", openRanks);
+    $("#btnItems").addEventListener("click", openItems);
+    $("#btnNpc").addEventListener("click", openNpc);
     // ปุ่มคำสั่งด่วน
     const quick = [
       ["list", "ใครออนบ้าง"], ["say สวัสดีชาวเซิฟ!", "ประกาศ"], ["spark tps", "เช็ก TPS"],
@@ -467,6 +469,21 @@
       toast(r.ok ? "🎖 ตั้งยศให้แล้ว" : "⚠ " + r.error);
       return;
     }
+    if (e.target.closest("[data-itemclose]") || e.target.id === "itemOverlay") { closeItems(); return; }
+    if (e.target.closest("[data-npcclose]") || e.target.id === "npcOverlay") { closeNpc(); return; }
+    const iac = e.target.closest("[data-copy-ia]");
+    if (iac) { copyText("/" + iac.dataset.copyIa); return; }
+    if (e.target.id === "itCreate") { createItem(); return; }
+    if (e.target.id === "itPack") {
+      const btn = e.target;
+      btn.disabled = true;
+      fetch("/api/items/reload", { method: "POST", headers: pinHeaders() })
+        .then(r => r.status === 401 ? (askPin(), { ok: false, error: "ต้องใส่ PIN" }) : r.json())
+        .then(r => { btn.disabled = false; toast(r.ok ? "📦 อัปเดต pack แล้ว — ผู้เล่นจะได้รับ pack ใหม่" : "⚠ " + r.error); })
+        .catch(() => { btn.disabled = false; toast("⚠ ต่อ backend ไม่ได้"); });
+      return;
+    }
+    if (e.target.id === "npCreate") { createNpc(); return; }
     if (e.target.id === "presetSave") {
       document.querySelectorAll("[data-preset]").forEach(ta => {
         rankData.presets[ta.dataset.preset].perms = ta.value.split("\n").map(x => x.trim()).filter(Boolean);
@@ -479,6 +496,183 @@
   document.addEventListener("input", (e) => {
     if (["rkIcon", "rkDisplay", "rkColor"].includes(e.target.id)) updateRankPreview();
   });
+
+  /* ==========================================================
+     🎨 สร้างไอเทม ItemsAdder — ฟอร์ม + texture + พรีวิว + สเตตัส
+     เขียนลง contents/oneblock แล้วกด "อัปเดต pack" (iazip) ให้มีผล
+     ========================================================== */
+  let itemTextureB64 = null;
+  const MATERIALS = [
+    ["PAPER", "📄 กระดาษ (ไอเทมทั่วไป/วัตถุดิบ)"], ["DIAMOND_SWORD", "⚔ ดาบเพชร (อาวุธ)"],
+    ["IRON_SWORD", "🗡 ดาบเหล็ก (อาวุธ)"], ["BOW", "🏹 ธนู"], ["STICK", "🪄 แท่งไม้ (คทา/ไม้กายสิทธิ์)"],
+    ["APPLE", "🍎 แอปเปิล (อาหาร)"], ["IRON_PICKAXE", "⛏ อีเต้อเหล็ก (เครื่องมือ)"],
+    ["LEATHER_CHESTPLATE", "🦺 เกราะหนัง"], ["EMERALD", "💚 มรกต (ของหายาก/เหรียญ)"]
+  ];
+
+  async function openItems() {
+    let r;
+    try {
+      const res = await fetch("/api/items", { headers: pinHeaders() });
+      if (res.status === 401) { askPin(); return; }
+      r = await res.json();
+    } catch { r = null; }
+    if (!r || !r.ok) { toast("⚠ " + (r ? r.error : "ต่อ backend ไม่ได้")); return; }
+    itemTextureB64 = null;
+
+    const list = r.items.map(it => `
+      <div class="item-card">
+        ${it.hasTexture ? `<img class="item-thumb" src="/ia-texture/${it.id}.png" alt="">` : `<span class="item-thumb noimg">${(MATERIALS.find(m => m[0] === it.material) || ["", "❔"])[1].split(" ")[0]}</span>`}
+        <div class="item-info"><b>${esc(it.displayName.replace(/&[0-9a-fk-or]/g, ""))}</b><small>${r.namespace}:${it.id}</small></div>
+        <button class="rbtn" data-copy-ia="iaget ${r.namespace}:${it.id}">📋 คำสั่งรับของ</button>
+      </div>`).join("");
+
+    $("#itemModal").innerHTML = `
+      <div class="modal-head">
+        <div class="ico">🎨</div>
+        <div><h2>สร้างไอเทม (ItemsAdder)</h2><div class="ver">namespace: ${r.namespace} • สร้างเสร็จกด "อัปเดต pack" ถึงจะเห็นในเกม</div></div>
+        <button class="close-btn" data-itemclose>×</button>
+      </div>
+      <div class="modal-body">
+        <div class="cfg-title">ไอเทมที่มีแล้ว (${r.items.length})</div>
+        <div class="item-list">${list || '<span class="cfg-note">ยังไม่มีไอเทม</span>'}</div>
+
+        <div class="rank-form">
+          <div class="cfg-title">➕ สร้างไอเทมใหม่</div>
+          <div class="cfg-row"><label>รหัสไอเทม (a-z, _)<small>เช่น sakura_sword — ใช้ในคำสั่ง iaget</small></label>
+            <input type="text" id="itId" placeholder="sakura_sword"></div>
+          <div class="cfg-row"><label>ชื่อโชว์<small>ภาษาไทยได้</small></label>
+            <input type="text" id="itName" placeholder="ดาบซากุระ"></div>
+          <div class="cfg-row"><label>สีชื่อ</label>
+            <select id="itColor">${COLORS.map(([c, n]) => `<option value="${c}">${n}</option>`).join("")}</select></div>
+          <div class="cfg-row"><label>ไอเทมฐาน<small>กำหนดพฤติกรรม (ฟันได้/กินได้/ขุดได้)</small></label>
+            <select id="itMat">${MATERIALS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select></div>
+          <div class="cfg-row"><label>คำอธิบาย (lore)<small>1 บรรทัดต่อ 1 ข้อความ โชว์ใต้ชื่อ</small></label>
+            <textarea id="itLore" rows="3" placeholder="ดาบจากต้นซากุระพันปี&#10;ดรอปจากบอสลูนาเรกซ์"></textarea></div>
+          <div class="cfg-title" style="margin-top:12px">สเตตัส (เว้นว่าง = ไม่ใส่)</div>
+          <div class="cfg-row"><label>⚔ ดาเมจโจมตี<small>ดาบเพชรปกติ = 7</small></label><input type="number" id="itDmg" step="0.5"></div>
+          <div class="cfg-row"><label>⚡ ความเร็วโจมตี<small>ติดลบ = ช้าลง เช่น -2 (ดาบปกติ -2.4)</small></label><input type="number" id="itSpd" step="0.1"></div>
+          <div class="cfg-row"><label>❤ HP โบนัสตอนถือ<small>2 = 1 หัวใจ</small></label><input type="number" id="itHp" step="1"></div>
+          <div class="cfg-title" style="margin-top:12px">Texture (รูปไอเทม)</div>
+          <div class="cfg-row"><label>อัปโหลด .png<small>16x16 หรือ 32x32 พิกเซล / ไม่ใส่ = ใช้หน้าตาไอเทมฐาน</small></label>
+            <div class="tex-zone"><input type="file" id="itTex" accept="image/png">
+            <img id="itPreview" class="tex-preview" style="display:none"></div></div>
+          <div class="cfg-actions">
+            <span class="cfg-note" id="itMsg">💡 ยังไม่มีโมเดล 3D ในเวอร์ชันนี้ — ใช้ texture 2D ก่อน (โมเดล 3D รอ Blockbench + เฟสถัดไป)</span>
+            <button class="pbtn run" id="itCreate">สร้างไอเทม</button>
+            <button class="pbtn send" id="itPack">📦 อัปเดต pack</button>
+          </div>
+        </div>
+      </div>`;
+    $("#itemOverlay").classList.add("show");
+    document.body.style.overflow = "hidden";
+
+    $("#itTex").addEventListener("change", (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const fr = new FileReader();
+      fr.onload = () => {
+        itemTextureB64 = fr.result;
+        const img = $("#itPreview");
+        img.src = itemTextureB64;
+        img.style.display = "inline-block";
+      };
+      fr.readAsDataURL(f);
+    });
+  }
+  const closeItems = () => { $("#itemOverlay").classList.remove("show"); document.body.style.overflow = ""; };
+
+  async function createItem() {
+    const b = {
+      id: $("#itId").value, displayName: $("#itName").value.trim(), color: $("#itColor").value,
+      material: $("#itMat").value, lore: $("#itLore").value.split("\n"),
+      stats: { damage: $("#itDmg").value, speed: $("#itSpd").value, health: $("#itHp").value },
+      textureBase64: itemTextureB64
+    };
+    if (!b.displayName) { toast("⚠ ตั้งชื่อไอเทมก่อน"); return; }
+    try {
+      const r = await (await fetch("/api/items/create", { method: "POST", headers: { "Content-Type": "application/json", ...pinHeaders() }, body: JSON.stringify(b) })).json();
+      if (!r.ok) { toast("⚠ " + r.error); return; }
+      toast(`🎨 สร้าง ${r.full} แล้ว! กด 📦 อัปเดต pack แล้วรับของด้วย /iaget ${r.full}`);
+      openItems();
+    } catch { toast("⚠ ต่อ backend ไม่ได้"); }
+  }
+
+  /* ==========================================================
+     🧍 สร้าง NPC (Citizens) — ไม่ต้องพิมพ์คำสั่งเอง
+     ========================================================== */
+  async function openNpc() {
+    let w;
+    try {
+      const res = await fetch("/api/worlds", { headers: pinHeaders() });
+      if (res.status === 401) { askPin(); return; }
+      w = await res.json();
+    } catch { w = null; }
+    const worlds = (w && w.ok) ? w.worlds : ["world"];
+
+    $("#npcModal").innerHTML = `
+      <div class="modal-head">
+        <div class="ico">🧍</div>
+        <div><h2>สร้าง NPC (Citizens)</h2><div class="ver">ต้องเปิดเซิร์ฟก่อน — สร้างปุ๊บโผล่ในเกมทันที</div></div>
+        <button class="close-btn" data-npcclose>×</button>
+      </div>
+      <div class="modal-body">
+        <div class="cfg-row"><label>ชื่อ NPC<small>โชว์เหนือหัว (ไทยได้, เว้นวรรคจะถูกแทนด้วย _)</small></label>
+          <input type="text" id="npName" placeholder="ลุงช่างตีเหล็ก"></div>
+        <div class="cfg-row"><label>สกิน<small>ใส่ชื่อผู้เล่น Minecraft ที่สกินสวย เช่น Notch (เว้นว่าง = สกินสุ่ม)</small></label>
+          <input type="text" id="npSkin" placeholder="Oxygenlave"></div>
+        <div class="cfg-title" style="margin-top:12px">ตำแหน่งยืน</div>
+        <div class="cfg-row"><label>โลก</label>
+          <select id="npWorld">${worlds.map(x => `<option${x === "world" ? " selected" : ""}>${x}</option>`).join("")}</select></div>
+        <div class="cfg-row"><label>พิกัด x / y / z</label>
+          <div class="pos-inputs"><input type="number" id="npX" placeholder="x"><input type="number" id="npY" placeholder="y"><input type="number" id="npZ" placeholder="z">
+          <button class="rbtn" id="npHere">📍 ตรงที่ Oxygenlave ยืน</button></div></div>
+        <div class="cfg-title" style="margin-top:12px">พฤติกรรม</div>
+        <div class="cfg-row"><label>หันหน้าตามผู้เล่น</label>
+          <select id="npLook"><option value="1" selected>เปิด</option><option value="0">ปิด</option></select></div>
+        <div class="cfg-row"><label>คลิกแล้วทำอะไร<small>คำสั่งที่รันเมื่อผู้เล่นคลิก NPC</small></label>
+          <select id="npAct"><option value="">— ไม่ทำอะไร —</option><option value="shop">เปิดร้านค้า (/shop)</option><option value="spawn">วาร์ปไป spawn</option><option value="custom">คำสั่งกำหนดเอง…</option></select></div>
+        <div class="cfg-row" id="npCustomRow" style="display:none"><label>คำสั่งกำหนดเอง<small>ไม่ต้องใส่ /</small></label>
+          <input type="text" id="npCustom" placeholder="เช่น kit start"></div>
+        <div class="cfg-actions">
+          <span class="cfg-note">แก้ทีหลัง: เข้าเกม /npc select แล้วใช้ /npc … หรือลบด้วย /npc remove</span>
+          <button class="pbtn run" id="npCreate">สร้าง NPC</button>
+        </div>
+        <div id="npLog" class="cfg-note" style="margin-top:8px"></div>
+      </div>`;
+    $("#npcOverlay").classList.add("show");
+    document.body.style.overflow = "hidden";
+
+    $("#npAct").addEventListener("change", () => {
+      $("#npCustomRow").style.display = $("#npAct").value === "custom" ? "" : "none";
+    });
+    $("#npHere").addEventListener("click", async () => {
+      let r;
+      try {
+        const res = await fetch("/api/npc/playerpos", { method: "POST", headers: pinHeaders() });
+        if (res.status === 401) { askPin(); return; }
+        r = await res.json();
+      } catch { r = { ok: false, error: "ต่อ backend ไม่ได้" }; }
+      if (r.ok) { $("#npX").value = r.x; $("#npY").value = r.y; $("#npZ").value = r.z; toast("📍 ดึงตำแหน่งแล้ว — อย่าลืมเช็กว่าโลกถูก"); }
+      else toast("⚠ " + r.error);
+    });
+  }
+  const closeNpc = () => { $("#npcOverlay").classList.remove("show"); document.body.style.overflow = ""; };
+
+  async function createNpc() {
+    const act = $("#npAct").value;
+    const command = act === "custom" ? $("#npCustom").value : act === "shop" ? "shop" : act === "spawn" ? "spawn" : "";
+    const b = {
+      name: $("#npName").value, skin: $("#npSkin").value,
+      pos: { x: $("#npX").value, y: $("#npY").value, z: $("#npZ").value, world: $("#npWorld").value },
+      lookclose: $("#npLook").value === "1", command
+    };
+    try {
+      const r = await (await fetch("/api/npc/create", { method: "POST", headers: { "Content-Type": "application/json", ...pinHeaders() }, body: JSON.stringify(b) })).json();
+      if (!r.ok) { toast("⚠ " + r.error); return; }
+      toast("🧍 สร้าง NPC แล้ว! เข้าเกมไปดูได้เลย");
+      $("#npLog").innerHTML = (r.log || []).map(l => `<div>&gt; ${esc(l.cmd)}<br>&nbsp;&nbsp;${esc(l.reply || "(ok)")}</div>`).join("");
+    } catch { toast("⚠ ต่อ backend ไม่ได้"); }
+  }
 
   /* ---------- ปลั๊กอินที่ยังขาด ---------- */
   function renderPlanned() {
@@ -642,7 +836,7 @@
     if (e.target.closest("[data-close]") || e.target.id === "overlay") closeModal();
     if (e.target.closest("[data-cfgclose]") || e.target.id === "cfgOverlay") closeConfig();
   });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeModal(); closeConfig(); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeModal(); closeConfig(); closeRanks(); closeItems(); closeNpc(); } });
 
   $("#footer").innerHTML = `รวบรวมจากเซิฟจริง • แก้ข้อมูลที่ <b>data.js</b> ไฟล์เดียว • ดูแลโดย Claude Code`;
 

@@ -20,6 +20,8 @@
         <div class="panel-btns">
           <button id="btnStart" class="pbtn run" disabled>▶ Run เซิร์ฟ</button>
           <button id="btnStop" class="pbtn stop" disabled>⏹ Stop</button>
+          <button id="btnItems" class="pbtn cfg">🎨 สร้างไอเทม</button>
+          <button id="btnNpc" class="pbtn cfg">🧍 สร้าง NPC</button>
           <button id="btnRanks" class="pbtn cfg">🎖 จัดการยศ</button>
           <button id="btnConfig" class="pbtn cfg">⚙ ตั้งค่าเซิร์ฟ</button>
         </div>
@@ -69,6 +71,16 @@
   <!-- modal จัดการยศ (LuckPerms ผ่าน RCON) -->
   <div class="overlay" id="rankOverlay">
     <div class="modal" id="rankModal"></div>
+  </div>
+
+  <!-- modal สร้างไอเทม ItemsAdder -->
+  <div class="overlay" id="itemOverlay">
+    <div class="modal" id="itemModal"></div>
+  </div>
+
+  <!-- modal สร้าง NPC Citizens -->
+  <div class="overlay" id="npcOverlay">
+    <div class="modal" id="npcModal"></div>
   </div>
 
   <script src="data.js"></script>
