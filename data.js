@@ -534,18 +534,18 @@ window.MC = {
   planned: [
     {
       name: "MMOItems + MythicLib",
-      phase: 1,
+      phase: 2,
       icon: "⚔️",
-      why: "หัวใจไอเทม RPG — อาวุธ/เกราะมี stat, tier, ตีบวก ตามแผนโซนมิดกาเรีย (MythicLib ฟรี / MMOItems €19.99 บน SpigotMC — หน้าร้าน tested ถึง 1.21 ควรถาม Discord ของ PhoenixDevt ว่ารองรับ 1.21.11 หรือยัง ก่อนจ่ายเงิน)",
-      status: "รอซื้อ (€19.99) — เช็กเวอร์ชันก่อน",
-      pairs: "⚠ ลงแล้วต้องปิด REAL blocks ใน config ItemsAdder กันบล็อกตีกัน (มีวิธีในวิกิ IA) / เกราะ skin ของ MMOItems ใช้กับเกราะ IA ไม่ได้ / เชื่อม MythicMobs ให้มอนดรอปไอเทม MMOItems"
+      why: "ระบบไอเทม RPG เต็มรูป (stat/tier/ตีบวก) — 📌 มติ 2026-07-14: ไม่ซื้อจนกว่าจะพิสูจน์ว่าจำเป็น เฟส 1 ใช้ vanilla + ItemsAdder (UI สร้างไอเทมบนเว็บ) แทน โดยออกแบบ drop table ให้อ้าง id กลาง สลับเข้าทีหลังได้",
+      status: "เลื่อน — ไม่ซื้อตอนนี้ (มติเจ้าของเซิร์ฟ)",
+      pairs: "⚠ ถ้าซื้อในอนาคต: ปิด REAL blocks ใน config ItemsAdder / ถาม Discord PhoenixDevt เรื่อง 1.21.11 ก่อนจ่าย"
     },
     {
       name: "MMOCore",
       phase: 2,
       icon: "🧙",
-      why: "ระบบอาชีพ/คลาส (รวม Gunslinger ตามแผน) + เลเวลผู้เล่น ค่ายเดียวกับ MMOItems (€19.99) — ตัวแทนฟรีที่ researcher แนะนำ: Fabled (อดีต ProSkillAPI, open source, คลาส/สกิล/web editor ครบ) ⚠ เลเวลจะซ้อนกับ AuraSkills ต้องเลือกเจ้าภาพให้ชัด",
-      status: "รอเฟส 2 (€19.99 หรือ Fabled ฟรี)",
+      why: "ระบบอาชีพ/คลาส (Gunslinger) — 📌 มติ 2026-07-14: ไม่ซื้อ / เจ้าภาพเลเวลเฟส 1 = AuraSkills (เลเวลโซนอิงเลเวลสกิลรวม) / ถ้าเฟส 2 ต้องมีอาชีพจริง ประเมิน Fabled (ฟรี open source) ก่อนเสมอ",
+      status: "เลื่อน — ใช้ AuraSkills + Fabled แทน",
       pairs: "MMOItems กำหนด requirement อาชีพ/เลเวลบนไอเทมได้"
     },
     {
